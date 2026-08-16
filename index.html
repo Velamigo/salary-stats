@@ -491,12 +491,29 @@ function periodLabel(p) {
 
 // Get item value for a specific period by matching item_name substring
 function getItemValue(period, nameMatch, categoryMatch) {
+  const clean = s => s.replace(/\s+/g, '');
+  const name = clean(nameMatch);
+  // 先精确匹配
   const item = allData.find(d =>
     d.period === period &&
-    (categoryMatch ? d.category.replace(/\s+/g, '').includes(categoryMatch.replace(/\s+/g, '')) : true) &&
-    d.item_name.replace(/\s+/g, '').includes(nameMatch.replace(/\s+/g, ''))
+    (categoryMatch ? clean(d.category).includes(clean(categoryMatch)) : true) &&
+    clean(d.item_name) === name
   );
-  return item ? item.item_value : 0;
+  if (item) return item.item_value;
+  // 后缀匹配（如"工资税"匹配以"工资税"结尾的名称，但限制长度差不超过3）
+  const item2 = allData.find(d =>
+    d.period === period &&
+    (categoryMatch ? clean(d.category).includes(clean(categoryMatch)) : true) &&
+    clean(d.item_name).endsWith(name) && clean(d.item_name).length <= name.length + 3
+  );
+  if (item2) return item2.item_value;
+  // 前缀匹配（如"总计"匹配以"总计"开头的名称）
+  const item3 = allData.find(d =>
+    d.period === period &&
+    (categoryMatch ? clean(d.category).includes(clean(categoryMatch)) : true) &&
+    clean(d.item_name).startsWith(name)
+  );
+  return item3 ? item3.item_value : 0;
 }
 
 function getNetPay(period) {
