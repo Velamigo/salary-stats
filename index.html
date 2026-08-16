@@ -169,6 +169,7 @@ h1 { font-size: 22px; font-weight: 700; }
   border-radius: 10px;
   padding: 12px;
   box-shadow: var(--shadow);
+  position: relative;
 }
 .spark-header {
   display: flex;
@@ -336,6 +337,26 @@ select {
   .summary-card .s-value { font-size: 17px; }
   .spark-grid { grid-template-columns: 1fr; }
 }
+
+/* Sparkline tooltip */
+.spark-tooltip {
+  position: absolute;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  margin-top: -10px;
+  transition: opacity .15s;
+  opacity: 0;
+}
+.spark-tooltip.visible { opacity: 1; }
+.spark-tooltip .st-month { font-size: 11px; color: var(--text-secondary); margin-bottom: 2px; }
+.spark-tooltip .st-value { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -501,7 +522,7 @@ function getSeries(nameMatch, categoryMatch, count) {
 }
 
 // ===== Sparkline SVG =====
-function buildSparkline(values, isUp) {
+function buildSparkline(values, isUp, months) {
   // values: array of numbers (4 months)
   const count = values.length;
   if (count < 2) return '<div class="sparkline"></div>';
@@ -520,7 +541,7 @@ function buildSparkline(values, isUp) {
   const points = values.map((v, i) => {
     const x = padX + (usableW * i) / (count - 1);
     const y = padY + usableH - ((v - minVal) / range) * usableH;
-    return { x, y, v };
+    return { x, y, v, month: months ? months[i] : '', idx: i };
   });
 
   const color = isUp === true ? 'var(--green)' : isUp === false ? 'var(--red)' : 'var(--text-secondary)';
@@ -529,6 +550,14 @@ function buildSparkline(values, isUp) {
   const circles = points.map((p, i) => {
     const isLast = i === points.length - 1;
     return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isLast ? 4 : 2.5}" fill="${color}" ${isLast ? `stroke="var(--card-bg)" stroke-width="1.5"` : ''}/>`;
+  }).join('');
+
+  // Transparent hit areas for interaction
+  const hitAreas = points.map(p => {
+    const valStr = p.v < 0
+      ? '-¥' + Math.abs(p.v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : '¥' + p.v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return `<circle class="spark-hit" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="15" fill="transparent" style="cursor:pointer" data-month="${p.month}" data-value="${valStr}"/>`;
   }).join('');
 
   // Area under line (subtle fill)
@@ -540,11 +569,13 @@ function buildSparkline(values, isUp) {
     <path d="${areaPath}" fill="${color}" opacity="0.08"/>
     <polyline points="${polylinePoints}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
     ${circles}
+    ${hitAreas}
   </svg>`;
 }
 
 function buildSparkCard(title, values, opts = {}) {
   const recent = periods.slice(-values.length);
+  const months = recent.map(p => p); // full period string e.g. "202604"
   const current = values[values.length - 1];
   const first = values[0];
   const diff = current - first;
@@ -564,7 +595,7 @@ function buildSparkCard(title, values, opts = {}) {
       <span class="spark-title">${title}</span>
       <span class="spark-current ${trendClass}">${displayValue} ${trendArrow}</span>
     </div>
-    ${buildSparkline(values, isUp)}
+    ${buildSparkline(values, isUp, months)}
     <div class="spark-axis-labels">${axisLabels}</div>
   </div>`;
 }
@@ -728,6 +759,89 @@ function selectMonth(m) {
   render();
 }
 
+// ===== Sparkline tooltip =====
+let sparkTooltipEl = null;
+let sparkTooltipTimer = null;
+
+function ensureSparkTooltip() {
+  if (sparkTooltipEl) return sparkTooltipEl;
+  sparkTooltipEl = document.createElement('div');
+  sparkTooltipEl.className = 'spark-tooltip';
+  sparkTooltipEl.innerHTML = '<div class="st-month"></div><div class="st-value"></div>';
+  document.body.appendChild(sparkTooltipEl);
+  return sparkTooltipEl;
+}
+
+function showSparkTooltip(hitArea, cardEl) {
+  const tt = ensureSparkTooltip();
+  const month = hitArea.dataset.month;
+  const value = hitArea.dataset.value;
+  tt.querySelector('.st-month').textContent = month ? periodLabel(month) : '';
+  tt.querySelector('.st-value').textContent = value;
+
+  // Position relative to the spark-card
+  const cardRect = cardEl.getBoundingClientRect();
+  const hitRect = hitArea.getBoundingClientRect();
+  const x = hitRect.left + hitRect.width / 2;
+  const y = hitRect.top;
+
+  let left = x;
+  let top = y + window.scrollY - 10; // above the point, in document coords
+
+  tt.style.left = left + 'px';
+  tt.style.top = top + 'px';
+  tt.classList.add('visible');
+
+  // Clamp within card horizontal bounds
+  requestAnimationFrame(() => {
+    const ttRect = tt.getBoundingClientRect();
+    const halfW = ttRect.width / 2;
+    if (left - halfW < cardRect.left) left = cardRect.left + halfW;
+    if (left + halfW > cardRect.right) left = cardRect.right - halfW;
+    tt.style.left = left + 'px';
+  });
+}
+
+function hideSparkTooltip() {
+  if (sparkTooltipEl) sparkTooltipEl.classList.remove('visible');
+}
+
+function attachSparkInteractions() {
+  const hitAreas = document.querySelectorAll('.spark-hit');
+  hitAreas.forEach(ha => {
+    const card = ha.closest('.spark-card');
+    if (!card) return;
+
+    ha.addEventListener('mouseenter', () => {
+      clearTimeout(sparkTooltipTimer);
+      showSparkTooltip(ha, card);
+    });
+    ha.addEventListener('mouseleave', () => {
+      sparkTooltipTimer = setTimeout(hideSparkTooltip, 200);
+    });
+    ha.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showSparkTooltip(ha, card);
+    });
+    ha.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showSparkTooltip(ha, card);
+    }, { passive: false });
+  });
+
+  // Click outside to close
+  if (!attachSparkInteractions._bound) {
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.spark-hit')) hideSparkTooltip();
+    });
+    document.addEventListener('touchstart', (e) => {
+      if (!e.target.closest('.spark-hit')) hideSparkTooltip();
+    }, { passive: true });
+    attachSparkInteractions._bound = true;
+  }
+}
+
 // ===== Main render =====
 function render() {
   const app = document.getElementById('app');
@@ -741,6 +855,8 @@ function render() {
     case 'detail': html = renderDetail(); break;
   }
   app.innerHTML = html;
+  // Attach sparkline interactions after DOM is built
+  if (currentTab === 'dashboard') attachSparkInteractions();
 }
 
 // ===== Tab switching =====
