@@ -581,6 +581,11 @@ function buildSparkCard(title, values, opts = {}) {
   const diff = current - first;
   let trendClass, trendText;
   if (Math.abs(diff) < 0.01) { trendClass = 'flat'; isUp = null; }
+  else if (first < 0) {
+    // 负数项目（扣除项）：绝对值变大 = 多交了 = 涨 = 绿色
+    isUp = Math.abs(current) > Math.abs(first);
+    trendClass = isUp ? 'up' : 'down';
+  }
   else if (diff > 0) { trendClass = 'up'; isUp = true; }
   else { trendClass = 'down'; isUp = false; }
 
@@ -618,9 +623,15 @@ function renderDashboard() {
   function changeHtml(cur, pre, suffix) {
     if (!prev) return '';
     const d = cur - pre;
-    const cls = d >= 0 ? 'up' : 'down';
+    // 负数项目：绝对值变大 = 涨 = 绿色
+    let cls;
+    if (pre < 0) {
+      cls = Math.abs(cur) >= Math.abs(pre) ? 'up' : 'down';
+    } else {
+      cls = d >= 0 ? 'up' : 'down';
+    }
     const sign = d >= 0 ? '+' : '';
-    return `<div class="s-change ${cls}">${sign}${fmt(d)} ${suffix||''}</div>`;
+    return `<div class="s-change ${cls}">${sign}${fmt(Math.abs(d))} ${suffix||''}</div>`;
   }
 
   // Tax rate line
