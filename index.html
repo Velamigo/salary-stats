@@ -11,6 +11,7 @@
   --green: #00b86b;
   --green-bar: #00d68f;
   --red: #ff5b5b;
+  --orange: #fd7728;
   --bg: #f5f5f7;
   --card-bg: #ffffff;
   --text: #1a1a2e;
@@ -36,7 +37,7 @@ body {
   min-height: 100vh;
   transition: background .3s, color .3s;
 }
-.container { max-width: 720px; margin: 0 auto; padding: 16px 12px 40px; }
+.container { max-width: 720px; margin: 0 auto; padding: 16px 12px 60px; }
 header {
   display: flex;
   align-items: center;
@@ -62,81 +63,149 @@ h1 { font-size: 22px; font-weight: 700; }
   font-size: 13px;
   color: var(--text-secondary);
 }
+/* Tabs */
 .tabs {
   display: flex;
   gap: 8px;
-  overflow-x: auto;
   margin-bottom: 16px;
   padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
 }
 .tab {
-  flex: 0 0 auto;
-  padding: 8px 16px;
+  flex: 1;
+  padding: 10px 16px;
   border-radius: 20px;
   border: 1px solid var(--border);
   background: var(--card-bg);
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
+  text-align: center;
   transition: all .2s;
+  box-shadow: var(--shadow);
 }
 .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Cards */
 .card {
   background: var(--card-bg);
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   margin-bottom: 12px;
   box-shadow: var(--shadow);
 }
-.card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary); }
-.dashboard-net {
-  text-align: center;
-  margin-bottom: 24px;
+
+/* Group title */
+.group-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+  padding-left: 4px;
+  color: var(--text);
 }
-.dashboard-net .label { font-size: 14px; color: var(--text-secondary); margin-bottom: 4px; }
-.dashboard-net .value { font-size: 36px; font-weight: 700; color: var(--accent); }
-.dashboard-net .change { font-size: 14px; margin-top: 6px; }
-.change.up { color: var(--green); }
-.change.down { color: var(--red); }
-.stats-grid {
+
+/* Summary cards (top 4 big numbers) */
+.summary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
-.stat-item {
-  background: var(--bg);
+.summary-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 16px 14px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.summary-card.primary {
+  grid-column: span 2;
+  padding: 20px 14px;
+}
+.summary-card .s-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.summary-card .s-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.summary-card.primary .s-value {
+  font-size: 32px;
+  color: var(--accent);
+}
+.summary-card .s-change {
+  font-size: 12px;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.s-change.up { color: var(--green); }
+.s-change.down { color: var(--red); }
+
+/* Tax rate line */
+.tax-rate-line {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.tax-rate-line span { font-weight: 600; color: var(--text); }
+
+/* Sparkline cards grid */
+.spark-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (min-width: 560px) {
+  .spark-grid { grid-template-columns: 1fr 1fr 1fr; }
+}
+.spark-card {
+  background: var(--card-bg);
   border-radius: 10px;
-  padding: 14px;
+  padding: 12px;
+  box-shadow: var(--shadow);
 }
-.stat-item .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
-.stat-item .value { font-size: 20px; font-weight: 600; }
-/* Charts */
-.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 180px; padding-top: 20px; }
-.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
-.bar-group .bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; width: 100%; justify-content: center; }
-.bar-col { border-radius: 4px 4px 0 0; min-height: 2px; transition: height .5s ease; position: relative; cursor: pointer; }
-.bar-col .bar-label {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  white-space: nowrap;
-  margin-bottom: 2px;
-  color: var(--text);
+.spark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.spark-title {
+  font-size: 13px;
   font-weight: 600;
+  color: var(--text);
 }
-.bar-group .x-label { font-size: 11px; color: var(--text-secondary); }
-.bar-col.gross { background: var(--blue); }
-.bar-col.net { background: var(--green-bar); }
-.bar-col.single { background: var(--green-bar); }
-.legend { display: flex; gap: 16px; margin-bottom: 4px; font-size: 12px; color: var(--text-secondary); }
-.legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
-.legend-dot.gross { background: var(--blue); }
-.legend-dot.net { background: var(--green-bar); }
-/* Detail */
+.spark-current {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.spark-current.up { color: var(--green); }
+.spark-current.down { color: var(--red); }
+.spark-current.flat { color: var(--text-secondary); }
+
+/* SVG sparkline */
+.sparkline {
+  width: 100%;
+  height: 60px;
+  display: block;
+}
+.spark-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Detail page */
 .select-row { margin-bottom: 16px; }
 select {
   width: 100%;
@@ -194,38 +263,13 @@ select {
   font-variant-numeric: tabular-nums;
 }
 .detail-table td.val.neg { color: var(--red); }
-.detail-table td.val.pos { color: var(--green); }
 .detail-table tr:last-child td { border-bottom: none; }
 .detail-table tr.total-row td {
   font-weight: 700;
   border-top: 2px solid var(--border);
 }
-/* Insurance */
-.ins-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.ins-table th, .ins-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid var(--border); }
-.ins-table th { color: var(--text-secondary); font-weight: 500; }
-.ins-table td { font-variant-numeric: tabular-nums; }
-.ins-total {
-  margin-top: 12px;
-  text-align: right;
-  font-size: 14px;
-  font-weight: 700;
-}
-.ins-charts { margin-bottom: 20px; }
-.ins-bar-row { display: flex; align-items: flex-end; gap: 8px; height: 140px; margin-bottom: 8px; }
-.ins-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
-.ins-bar-col { width: 60%; border-radius: 4px 4px 0 0; transition: height .5s; }
-.ins-bar-label { font-size: 9px; white-space: nowrap; margin-bottom: 2px; color: var(--text); font-weight: 600; position: absolute; bottom: 100%; }
-/* Tax rate */
-.tax-chart { display: flex; align-items: flex-end; gap: 8px; height: 180px; padding-top: 20px; }
-.tax-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
-.tax-bar-group .tax-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; width: 100%; justify-content: center; }
-.tax-bar-group .tax-rate-label { font-size: 10px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-.tax-bar { width: 50%; border-radius: 4px 4px 0 0; transition: height .5s; position: relative; }
-.tax-bar.red { background: var(--red); }
-.tax-bar.green { background: var(--green-bar); }
-.tax-bar-label { font-size: 10px; font-weight: 600; color: var(--text); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap; margin-bottom: 2px; }
-.tax-x-label { font-size: 11px; color: var(--text-secondary); }
+
+/* Loading / error / no-data */
 .no-data {
   text-align: center;
   padding: 40px 20px;
@@ -234,6 +278,7 @@ select {
 }
 .loading { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 14px; }
 .error-msg { text-align: center; padding: 20px; color: var(--red); font-size: 14px; }
+
 /* Login */
 #loginScreen {
   min-height: 100vh;
@@ -285,15 +330,11 @@ select {
   min-height: 18px;
   margin-top: 8px;
 }
-@media (max-width: 480px) {
-  .dashboard-net .value { font-size: 30px; }
-  .stat-item .value { font-size: 16px; }
-  .bar-group .bars { height: 120px; }
-  .bar-col .bar-label { font-size: 9px; }
-  .tax-bar-label { font-size: 9px; }
-}
-@media (min-width: 481px) {
-  .stats-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+@media (max-width: 380px) {
+  .summary-card.primary .s-value { font-size: 26px; }
+  .summary-card .s-value { font-size: 17px; }
+  .spark-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -321,11 +362,8 @@ select {
   </header>
 
   <div class="tabs" id="tabs">
-    <div class="tab active" data-tab="dashboard">概览</div>
-    <div class="tab" data-tab="trend">月度趋势</div>
-    <div class="tab" data-tab="detail">工资明细</div>
-    <div class="tab" data-tab="insurance">五险一金</div>
-    <div class="tab" data-tab="tax">税和到手</div>
+    <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
+    <div class="tab" data-tab="detail">📋 明细</div>
   </div>
 
   <div id="app">
@@ -346,9 +384,7 @@ let dataLoaded = false;
 
 // ===== Auth =====
 function checkAuth() {
-  try {
-    return sessionStorage.getItem(AUTH_KEY) === '1';
-  } catch(e) { return false; }
+  try { return sessionStorage.getItem(AUTH_KEY) === '1'; } catch(e) { return false; }
 }
 
 function doLogin() {
@@ -411,9 +447,16 @@ async function loadData() {
   }
 }
 
+// ===== Helpers =====
 function fmt(n) {
   const v = Math.abs(n);
   return (n < 0 ? '-' : '') + v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtShort(n) {
+  const v = Math.abs(n);
+  if (v >= 10000) return (n < 0 ? '-' : '') + (v / 10000).toFixed(1) + '万';
+  return fmt(n);
 }
 
 function fmtInt(n) {
@@ -421,139 +464,204 @@ function fmtInt(n) {
   return (n < 0 ? '-' : '') + Math.abs(v).toLocaleString('zh-CN');
 }
 
+function periodLabel(p) {
+  return p.slice(2, 4) + '/' + p.slice(4, 6);
+}
+
+// Get item value for a specific period by matching item_name substring
+function getItemValue(period, nameMatch, categoryMatch) {
+  const item = allData.find(d =>
+    d.period === period &&
+    (categoryMatch ? d.category.replace(/\s+/g, '').includes(categoryMatch.replace(/\s+/g, '')) : true) &&
+    d.item_name.replace(/\s+/g, '').includes(nameMatch.replace(/\s+/g, ''))
+  );
+  return item ? item.item_value : 0;
+}
+
 function getNetPay(period) {
-  const item = allData.find(d => d.period === period && d.category.includes('税后') && d.item_name.includes('税后实发'));
-  return item ? item.item_value : 0;
+  return getItemValue(period, '税后实发', '税后');
 }
 
-function getGrossIncome(period) {
-  const item = allData.find(d => d.period === period && d.category.includes('税前收入') && d.item_name.includes('总计'));
-  return item ? item.item_value : 0;
-}
-
-function getDeduction(period) {
-  const item = allData.find(d => d.period === period && d.category.includes('税前工资扣除') && d.item_name.includes('总计'));
-  return item ? Math.abs(item.item_value) : 0;
+function getGrossTotal(period) {
+  return getItemValue(period, '总计', '税前收入');
 }
 
 function getTax(period) {
-  const item = allData.find(d => d.period === period && d.category.includes('个人所得税') && d.item_name.includes('工资税'));
-  return item ? item.item_value : 0;
+  return getItemValue(period, '工资税', '个人所得税');
 }
 
-function periodLabel(p) {
-  return p.slice(2, 4) + '/' + p.slice(4, 6);
+function getDeductionTotal(period) {
+  return Math.abs(getItemValue(period, '总计', '税前工资扣除'));
+}
+
+// Get values for recent N periods for a given item
+function getSeries(nameMatch, categoryMatch, count) {
+  const recent = periods.slice(-count);
+  return recent.map(p => getItemValue(p, nameMatch, categoryMatch));
+}
+
+// ===== Sparkline SVG =====
+function buildSparkline(values, isUp) {
+  // values: array of numbers (4 months)
+  const count = values.length;
+  if (count < 2) return '<div class="sparkline"></div>';
+
+  const w = 200;
+  const h = 60;
+  const padX = 10;
+  const padY = 8;
+  const usableW = w - padX * 2;
+  const usableH = h - padY * 2;
+
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const range = maxVal - minVal || 1;
+
+  const points = values.map((v, i) => {
+    const x = padX + (usableW * i) / (count - 1);
+    const y = padY + usableH - ((v - minVal) / range) * usableH;
+    return { x, y, v };
+  });
+
+  const color = isUp === true ? 'var(--green)' : isUp === false ? 'var(--red)' : 'var(--text-secondary)';
+
+  const polylinePoints = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const circles = points.map((p, i) => {
+    const isLast = i === points.length - 1;
+    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isLast ? 4 : 2.5}" fill="${color}" ${isLast ? `stroke="var(--card-bg)" stroke-width="1.5"` : ''}/>`;
+  }).join('');
+
+  // Area under line (subtle fill)
+  const areaPath = `M${points[0].x.toFixed(1)},${(h - padY).toFixed(1)} ` +
+    points.map(p => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') +
+    ` L${points[points.length-1].x.toFixed(1)},${(h - padY).toFixed(1)} Z`;
+
+  return `<svg viewBox="0 0 ${w} ${h}" class="sparkline" preserveAspectRatio="none">
+    <path d="${areaPath}" fill="${color}" opacity="0.08"/>
+    <polyline points="${polylinePoints}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${circles}
+  </svg>`;
+}
+
+function buildSparkCard(title, values, opts = {}) {
+  const recent = periods.slice(-values.length);
+  const current = values[values.length - 1];
+  const first = values[0];
+  const diff = current - first;
+  let trendClass, trendText;
+  if (Math.abs(diff) < 0.01) { trendClass = 'flat'; isUp = null; }
+  else if (diff > 0) { trendClass = 'up'; isUp = true; }
+  else { trendClass = 'down'; isUp = false; }
+
+  const isNegative = current < 0;
+  const displayValue = (isNegative ? '-' : '') + fmtShort(current);
+  const trendArrow = isUp === true ? '↑' : isUp === false ? '↓' : '→';
+
+  const axisLabels = recent.map(p => `<span>${periodLabel(p)}</span>`).join('');
+
+  return `<div class="spark-card">
+    <div class="spark-header">
+      <span class="spark-title">${title}</span>
+      <span class="spark-current ${trendClass}">${displayValue} ${trendArrow}</span>
+    </div>
+    ${buildSparkline(values, isUp)}
+    <div class="spark-axis-labels">${axisLabels}</div>
+  </div>`;
 }
 
 // ===== Dashboard =====
 function renderDashboard() {
   const latest = periods[periods.length - 1];
   const prev = periods.length > 1 ? periods[periods.length - 2] : null;
-  const net = getNetPay(latest);
-  const gross = getGrossIncome(latest);
-  const deduction = getDeduction(latest);
-  const tax = getTax(latest);
-  const prevNet = prev ? getNetPay(prev) : 0;
-  const diff = prev ? net - prevNet : 0;
 
-  let changeHtml = '';
-  if (prev) {
-    const cls = diff >= 0 ? 'up' : 'down';
-    if (diff >= 0) {
-      changeHtml = `<div class="change ${cls}">比上个月多 ${fmt(diff)} 元</div>`;
-    } else {
-      changeHtml = `<div class="change ${cls}">比上个月少 ${fmt(Math.abs(diff))} 元</div>`;
-    }
+  const net = getNetPay(latest);
+  const gross = getGrossTotal(latest);
+  const tax = getTax(latest);
+  const deduction = getDeductionTotal(latest);
+
+  const prevNet = prev ? getNetPay(prev) : 0;
+  const prevGross = prev ? getGrossTotal(prev) : 0;
+  const prevTax = prev ? getTax(prev) : 0;
+  const prevDed = prev ? getDeductionTotal(prev) : 0;
+
+  function changeHtml(cur, pre, suffix) {
+    if (!prev) return '';
+    const d = cur - pre;
+    const cls = d >= 0 ? 'up' : 'down';
+    const sign = d >= 0 ? '+' : '';
+    return `<div class="s-change ${cls}">${sign}${fmt(d)} ${suffix||''}</div>`;
   }
 
-  return `
-    <div class="card">
-      <div class="dashboard-net">
-        <div class="label">当月实发工资（${periodLabel(latest)}）</div>
-        <div class="value">${fmt(net)}</div>
-        ${changeHtml}
-      </div>
-      <div class="stats-grid">
-        <div class="stat-item">
-          <div class="label">税前收入</div>
-          <div class="value">${fmt(gross)}</div>
-        </div>
-        <div class="stat-item">
-          <div class="label">税前扣除</div>
-          <div class="value">-${fmt(deduction)}</div>
-        </div>
-        <div class="stat-item">
-          <div class="label">个人所得税</div>
-          <div class="value">${fmt(tax)}</div>
-        </div>
-        <div class="stat-item">
-          <div class="label">实发到手</div>
-          <div class="value">${fmt(net)}</div>
-        </div>
-      </div>
-    </div>
-  `;
-}
+  // Tax rate line
+  const taxRate = gross > 0 ? (tax / gross) * 100 : 0;
+  const netRatio = gross > 0 ? (net / gross) * 100 : 0;
 
-// ===== Trend =====
-function renderTrend() {
-  const recent4 = periods.slice(-4);
-  const nets = recent4.map(getNetPay);
-  const grosses = recent4.map(getGrossIncome);
-  const maxVal = Math.max(...nets, ...grosses, 1);
-  const chartH = 140;
+  // Build sparkline card groups
+  // Group 1: 税前收入
+  const grossCards = [
+    buildSparkCard('基本工资', getSeries('基本工资', '税前收入', 4)),
+    buildSparkCard('月综合津贴', getSeries('月综合津贴', '税前收入', 4)),
+    buildSparkCard('交通津贴', getSeries('交通津贴', '税前收入', 4)),
+    buildSparkCard('节日津贴', getSeries('节日津贴', '税前收入', 4)),
+    buildSparkCard('特别奖金', getSeries('特别奖金', '税前收入', 4)),
+    buildSparkCard('总计税前收入', getSeries('总计', '税前收入', 4)),
+  ].join('');
 
-  let bars = recent4.map((p, i) => {
-    const net = nets[i];
-    const gross = grosses[i];
-    const netH = (net / maxVal) * chartH;
-    const grossH = (gross / maxVal) * chartH;
-    return `
-      <div class="bar-group">
-        <div class="bars">
-          <div class="bar-col gross" style="height:${grossH}px" title="税前 ${fmt(gross)}">
-            <span class="bar-label">${fmtInt(gross)}</span>
-          </div>
-          <div class="bar-col net" style="height:${netH}px" title="实发 ${fmt(net)}">
-            <span class="bar-label">${fmtInt(net)}</span>
-          </div>
-        </div>
-        <div class="x-label">${periodLabel(p)}</div>
-      </div>
-    `;
-  }).join('');
+  // Group 2: 五险一金 (values are negative, show trend by absolute or keep negative)
+  const insCards = [
+    buildSparkCard('养老保险', getSeries('养老', '税前工资扣除', 4)),
+    buildSparkCard('失业保险', getSeries('失业', '税前工资扣除', 4)),
+    buildSparkCard('医疗保险', getSeries('医疗', '税前工资扣除', 4)),
+    buildSparkCard('住房公积金', getSeries('住房公积金', '税前工资扣除', 4)),
+    buildSparkCard('总计扣除', getSeries('总计', '税前工资扣除', 4)),
+  ].join('');
 
-  let netBars = recent4.map((p, i) => {
-    const net = nets[i];
-    const netH = (net / maxVal) * chartH;
-    return `
-      <div class="bar-group">
-        <div class="bars">
-          <div class="bar-col single" style="height:${netH}px;width:50%" title="实发 ${fmt(net)}">
-            <span class="bar-label">${fmtInt(net)}</span>
-          </div>
-        </div>
-        <div class="x-label">${periodLabel(p)}</div>
-      </div>
-    `;
-  }).join('');
+  // Group 3: 个税
+  const taxCards = buildSparkCard('工资税', getSeries('工资税', '个人所得税', 4));
+
+  // Group 4: 到手
+  const netCards = buildSparkCard('实发工资', getSeries('税后实发', '税后', 4));
 
   return `
-    <div class="card">
-      <h2>实发工资趋势（近${recent4.length}个月）</h2>
-      <div class="legend">
-        <span><span class="legend-dot net"></span>实发工资</span>
+    <!-- Summary cards -->
+    <div class="summary-grid">
+      <div class="summary-card primary">
+        <div class="s-label">当月实发工资（${periodLabel(latest)}）</div>
+        <div class="s-value">${fmt(net)}</div>
+        ${changeHtml(net, prevNet, '元')}
       </div>
-      <div class="bar-chart">${netBars}</div>
-    </div>
-    <div class="card">
-      <h2>税前收入 vs 实发工资</h2>
-      <div class="legend">
-        <span><span class="legend-dot gross"></span>税前收入</span>
-        <span><span class="legend-dot net"></span>实发工资</span>
+      <div class="summary-card">
+        <div class="s-label">税前收入</div>
+        <div class="s-value">${fmt(gross)}</div>
+        ${changeHtml(gross, prevGross, '元')}
       </div>
-      <div class="bar-chart">${bars}</div>
+      <div class="summary-card">
+        <div class="s-label">当月交税</div>
+        <div class="s-value" style="color:var(--red)">${fmt(tax)}</div>
+        ${changeHtml(tax, prevTax, '元')}
+      </div>
+      <div class="summary-card" style="grid-column:span 2">
+        <div class="s-label">当月五险一金</div>
+        <div class="s-value">-${fmt(deduction)}</div>
+        ${changeHtml(-deduction, -prevDed, '元')}
+        <div class="tax-rate-line">
+          税率 <span>${taxRate.toFixed(1)}%</span> | 到手比例 <span>${netRatio.toFixed(1)}%</span>
+        </div>
+      </div>
     </div>
+
+    <!-- Sparkline groups -->
+    <div class="group-title">💰 税前收入</div>
+    <div class="spark-grid">${grossCards}</div>
+
+    <div class="group-title">➖ 五险一金</div>
+    <div class="spark-grid">${insCards}</div>
+
+    <div class="group-title">📋 个税</div>
+    <div class="spark-grid">${taxCards}</div>
+
+    <div class="group-title">✅ 到手</div>
+    <div class="spark-grid">${netCards}</div>
   `;
 }
 
@@ -566,7 +674,6 @@ function renderDetail() {
   const options = periods.map(p => `<option value="${p}" ${p === selectedMonth ? 'selected' : ''}>${periodLabel(p)}</option>`).join('');
 
   const monthData = allData.filter(d => d.period === selectedMonth);
-  // All 7 categories in order
   const categoryOrder = [
     '1.税前收入',
     '2.税前工资扣除',
@@ -578,41 +685,30 @@ function renderDetail() {
   ];
 
   const groups = categoryOrder.map(cat => {
-    // Match flexibly: allow spaces differences
     const items = monthData.filter(d => d.category.replace(/\s+/g, '') === cat.replace(/\s+/g, ''));
     if (items.length === 0) {
-      return `
-        <div class="detail-card">
-          <div class="detail-card-title">${cat}</div>
-          <div class="detail-empty">本月无此项</div>
-        </div>
-      `;
+      return `<div class="detail-card">
+        <div class="detail-card-title">${cat}</div>
+        <div class="detail-empty">本月无此项</div>
+      </div>`;
     }
-    // Build a table
     const rows = items.map(item => {
       const v = item.item_value;
       let valClass = '';
       if (v < 0) valClass = 'neg';
-      else if (cat.includes('税前收入') || cat.includes('税后应发') && !cat.includes('扣除')) valClass = 'pos';
       const isTotal = item.item_name.includes('总计') || item.item_name.includes('合计');
-      return `
-        <tr class="${isTotal ? 'total-row' : ''}">
-          <td class="name">${item.item_name}</td>
-          <td class="val ${valClass}">${fmt(v)}</td>
-        </tr>
-      `;
+      return `<tr class="${isTotal ? 'total-row' : ''}">
+        <td class="name">${item.item_name}</td>
+        <td class="val ${valClass}">${fmt(v)}</td>
+      </tr>`;
     }).join('');
-    return `
-      <div class="detail-card">
-        <div class="detail-card-title">${cat}</div>
-        <table class="detail-table">
-          <thead>
-            <tr><th>项目</th><th style="text-align:right">金额（元）</th></tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    `;
+    return `<div class="detail-card">
+      <div class="detail-card-title">${cat}</div>
+      <table class="detail-table">
+        <thead><tr><th>项目</th><th style="text-align:right">金额（元）</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
   }).join('');
 
   return `
@@ -632,175 +728,6 @@ function selectMonth(m) {
   render();
 }
 
-// ===== Insurance =====
-function renderInsurance() {
-  const insTypes = [
-    { key: '养老保险', label: '养老保险', color: '#6c5ce7' },
-    { key: '失业保险', label: '失业保险', color: '#00d68f' },
-    { key: '医疗保险', label: '医疗保险', color: '#ff5b5b' },
-    { key: '住房公积金', label: '住房公积金', color: '#fdcb6e' }
-  ];
-
-  const recent4 = periods.slice(-4);
-  const monthTotals = {};
-  recent4.forEach(p => { monthTotals[p] = {}; insTypes.forEach(t => monthTotals[p][t.key] = 0); });
-
-  allData.forEach(d => {
-    if (!recent4.includes(d.period)) return;
-    insTypes.forEach(t => {
-      if (d.item_name.includes(t.key)) {
-        monthTotals[d.period][t.key] += Math.abs(d.item_value);
-      }
-    });
-  });
-
-  const allVals = recent4.flatMap(p => insTypes.map(t => monthTotals[p][t.key]));
-  const maxVal = Math.max(...allVals, 1);
-  const chartH = 120;
-
-  let bars = recent4.map(p => {
-    const cols = insTypes.map(t => {
-      const v = monthTotals[p][t.key];
-      const h = (v / maxVal) * chartH;
-      return `<div class="ins-bar-col" style="height:${h}px;background:${t.color}" title="${t.label}: ${fmt(v)}">
-        <span class="ins-bar-label">${fmtInt(v)}</span>
-      </div>`;
-    }).join('');
-    return `
-      <div class="ins-bar-group">
-        <div style="display:flex;align-items:flex-end;gap:4px;height:${chartH}px">${cols}</div>
-        <div class="x-label">${periodLabel(p)}</div>
-      </div>
-    `;
-  }).join('');
-
-  const grandTotals = insTypes.map(t => {
-    const total = recent4.reduce((s, p) => s + monthTotals[p][t.key], 0);
-    return { ...t, total };
-  });
-  const grandTotal = grandTotals.reduce((s, t) => s + t.total, 0);
-
-  let tableRows = recent4.map(p => {
-    const cells = insTypes.map(t => `<td>${fmt(monthTotals[p][t.key])}</td>`).join('');
-    return `<tr><td>${periodLabel(p)}</td>${cells}</tr>`;
-  }).join('');
-
-  let totalRow = `<tr style="font-weight:700"><td>合计</td>${grandTotals.map(t => `<td>${fmt(t.total)}</td>`).join('')}</tr>`;
-
-  return `
-    <div class="card">
-      <h2>五险一金月度对比</h2>
-      <div class="ins-charts" style="display:flex;gap:8px;align-items:flex-end">${bars}</div>
-      <div class="legend" style="flex-wrap:wrap">
-        ${insTypes.map(t => `<span><span class="legend-dot" style="background:${t.color}"></span>${t.label}</span>`).join('')}
-      </div>
-    </div>
-    <div class="card">
-      <h2>五险一金明细</h2>
-      <table class="ins-table">
-        <thead>
-          <tr>
-            <th>月份</th>
-            ${insTypes.map(t => `<th>${t.label}</th>`).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          ${tableRows}
-          ${totalRow}
-        </tbody>
-      </table>
-      <div class="ins-total">累计缴纳总额：${fmt(grandTotal)} 元</div>
-    </div>
-  `;
-}
-
-// ===== 税和到手 =====
-function renderTax() {
-  const recent4 = periods.slice(-4);
-  const monthData = recent4.map(p => {
-    const tax = getTax(p);
-    const gross = getGrossIncome(p);
-    const net = getNetPay(p);
-    return {
-      period: p,
-      tax,
-      gross,
-      net,
-      rate: gross > 0 ? (tax / gross) * 100 : 0,
-      netRatio: gross > 0 ? (net / gross) * 100 : 0
-    };
-  });
-
-  const hasData = monthData.some(d => d.tax > 0 || d.net > 0);
-  if (!hasData) {
-    return `
-      <div class="card">
-        <h2>💰 税和到手</h2>
-        <div class="no-data">暂无数据</div>
-      </div>
-    `;
-  }
-
-  const maxTax = Math.max(...monthData.map(d => d.tax), 1);
-  const maxRatio = Math.max(...monthData.map(d => d.netRatio), 1);
-  const chartH = 120;
-
-  let bars = monthData.map((d, i) => {
-    const taxH = (d.tax / maxTax) * chartH;
-    const netH = (d.netRatio / maxRatio) * chartH;
-    return `
-      <div class="tax-bar-group">
-        <div class="tax-rate-label">${d.rate.toFixed(1)}%</div>
-        <div class="tax-bars">
-          <div class="tax-bar red" style="height:${taxH}px" title="交税 ${fmt(d.tax)} 元">
-          </div>
-          <div class="tax-bar green" style="height:${netH}px" title="到手比例 ${d.netRatio.toFixed(1)}%">
-          </div>
-        </div>
-        <div class="tax-x-label">${periodLabel(d.period)}</div>
-      </div>
-    `;
-  }).join('');
-
-  // 底部总结
-  const totalTax = monthData.reduce((s, d) => s + d.tax, 0);
-  const totalNet = monthData.reduce((s, d) => s + d.net, 0);
-  const avgNet = monthData.length > 0 ? totalNet / monthData.length : 0;
-
-  return `
-    <div class="card">
-      <h2>💰 税和到手（近${recent4.length}个月）</h2>
-      <div class="legend">
-        <span><span class="legend-dot" style="background:var(--red)"></span>交了多少税</span>
-        <span><span class="legend-dot" style="background:var(--green-bar)"></span>到手比例</span>
-      </div>
-      <div class="tax-chart">${bars}</div>
-      <div style="font-size:11px;color:var(--text-secondary);margin-top:8px;line-height:1.5">
-        <div>红柱 = 这个月交的工资税</div>
-        <div>绿柱 = 到手比例（实发 ÷ 税前 × 100%）</div>
-        <div>柱子上方小字 = 税率（税 ÷ 税前 × 100%）</div>
-      </div>
-    </div>
-    <div class="card">
-      <h2>📊 累计总结</h2>
-      <div class="stats-grid">
-        <div class="stat-item">
-          <div class="label">${recent4.length}个月累计交税</div>
-          <div class="value" style="color:var(--red)">${fmt(totalTax)} 元</div>
-        </div>
-        <div class="stat-item">
-          <div class="label">${recent4.length}个月累计到手</div>
-          <div class="value" style="color:var(--green)">${fmt(totalNet)} 元</div>
-        </div>
-        <div class="stat-item">
-          <div class="label">平均每月到手</div>
-          <div class="value">${fmt(avgNet)} 元</div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
 // ===== Main render =====
 function render() {
   const app = document.getElementById('app');
@@ -811,10 +738,7 @@ function render() {
   let html = '';
   switch (currentTab) {
     case 'dashboard': html = renderDashboard(); break;
-    case 'trend': html = renderTrend(); break;
     case 'detail': html = renderDetail(); break;
-    case 'insurance': html = renderInsurance(); break;
-    case 'tax': html = renderTax(); break;
   }
   app.innerHTML = html;
 }
@@ -827,6 +751,7 @@ document.getElementById('tabs').addEventListener('click', (e) => {
   tab.classList.add('active');
   currentTab = tab.dataset.tab;
   render();
+  window.scrollTo(0, 0);
 });
 
 // ===== Theme =====
