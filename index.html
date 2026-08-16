@@ -554,10 +554,22 @@ function buildSparkline(values, isUp, months) {
   const minVal = Math.min(...values);
   const maxVal = Math.max(...values);
   const range = maxVal - minVal || 1;
-
+  
+  // 对负数项目（扣除项），反转 Y 轴：绝对值越大（交得越多）线越往上
+  const isNegative = values.some(v => v < 0);
   const points = values.map((v, i) => {
     const x = padX + (usableW * i) / (count - 1);
-    const y = padY + usableH - ((v - minVal) / range) * usableH;
+    let y;
+    if (isNegative) {
+      // 负数：绝对值越大 = 交得越多 = 线往上
+      const absV = Math.abs(v);
+      const absMin = Math.min(...values.map(Math.abs));
+      const absMax = Math.max(...values.map(Math.abs));
+      const absRange = absMax - absMin || 1;
+      y = padY + usableH - ((absV - absMin) / absRange) * usableH;
+    } else {
+      y = padY + usableH - ((v - minVal) / range) * usableH;
+    }
     return { x, y, v, month: months ? months[i] : '', idx: i };
   });
 
@@ -655,6 +667,13 @@ function renderDashboard() {
   const taxRate = gross > 0 ? (tax / gross) * 100 : 0;
   const netRatio = gross > 0 ? (net / gross) * 100 : 0;
 
+  // 累计统计
+  const totalGross = periods.reduce((s, p) => s + getGrossTotal(p), 0);
+  const totalNet = periods.reduce((s, p) => s + getNetPay(p), 0);
+  const totalTax = periods.reduce((s, p) => s + getTax(p), 0);
+  const totalDed = periods.reduce((s, p) => s + getDeductionTotal(p), 0);
+  const avgNet = periods.length > 0 ? totalNet / periods.length : 0;
+
   // Build sparkline card groups
   // Group 1: 税前收入
   const grossCards = [
@@ -718,6 +737,17 @@ function renderDashboard() {
         </div>
       </div>
     </div>
+    <div class="summary-row" style="grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px">
+      <div class="summary-item" style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div class="summary-label">${periods.length}个月累计税前</div>
+        <div class="summary-num" style="font-size:22px;font-weight:800;color:var(--accent)">¥${fmt(totalGross)}</div>
+      </div>
+      <div class="summary-item" style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div class="summary-label">${periods.length}个月累计到手</div>
+        <div class="summary-num" style="font-size:22px;font-weight:800;color:var(--green)">¥${fmt(totalNet)}</div>
+        <div style="font-size:12px;color:var(--text-secondary)">月均 ¥${fmt(avgNet)}</div>
+      </div>
+    </div>
 
     <!-- Sparkline groups -->
     <div class="group-title">💰 税前收入</div>
@@ -731,9 +761,6 @@ function renderDashboard() {
 
     <div class="group-title">✅ 到手</div>
     <div class="spark-grid">${netCards}</div>
-
-    <div class="group-title">📐 参数</div>
-    <div class="spark-grid">${paramCards}</div>
   `;
 }
 
