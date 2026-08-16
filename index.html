@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工资收入统计</title>
+<style>
+:root {
+  --accent: #6c5ce7;
+  --green: #00d68f;
+  --red: #ff5b5b;
+  --bg: #f5f5f7;
+  --card-bg: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #6c6c80;
+  --border: #e0e0e6;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+[data-theme="dark"] {
+  --bg: #0f0f1a;
+  --card-bg: #1a1a2e;
+  --text: #e8e8f0;
+  --text-secondary: #9999aa;
+  --border: #2a2a3e;
+  --shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background .3s, color .3s;
+}
+.container { max-width: 720px; margin: 0 auto; padding: 16px 12px 40px; }
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 8px;
+}
+h1 { font-size: 22px; font-weight: 700; }
+.theme-toggle {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 18px;
+  box-shadow: var(--shadow);
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.tab {
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+}
+.tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary); }
+.dashboard-net {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.dashboard-net .label { font-size: 14px; color: var(--text-secondary); margin-bottom: 4px; }
+.dashboard-net .value { font-size: 36px; font-weight: 700; color: var(--accent); }
+.dashboard-net .change { font-size: 14px; margin-top: 6px; }
+.change.up { color: var(--green); }
+.change.down { color: var(--red); }
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.stat-item {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 14px;
+}
+.stat-item .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.stat-item .value { font-size: 20px; font-weight: 600; }
+/* Charts */
+.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 180px; padding-top: 20px; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+.bar-group .bars { display: flex; align-items: flex-end; gap: 3px; height: 140px; width: 100%; justify-content: center; }
+.bar-col { border-radius: 4px 4px 0 0; min-height: 2px; transition: height .5s ease; position: relative; cursor: pointer; }
+.bar-col .bar-label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  white-space: nowrap;
+  margin-bottom: 2px;
+  color: var(--text);
+  font-weight: 600;
+}
+.bar-group .x-label { font-size: 11px; color: var(--text-secondary); }
+.bar-col.gross { background: rgba(108,92,231,.35); }
+.bar-col.net { background: var(--accent); }
+.bar-col.single { background: var(--accent); }
+.legend { display: flex; gap: 16px; margin-bottom: 4px; font-size: 12px; color: var(--text-secondary); }
+.legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.legend-dot.gross { background: rgba(108,92,231,.35); }
+.legend-dot.net { background: var(--accent); }
+/* Detail */
+.select-row { margin-bottom: 16px; }
+select {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+.detail-group { margin-bottom: 8px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.detail-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--bg);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+.detail-group-header .arrow { transition: transform .2s; font-size: 12px; color: var(--text-secondary); }
+.detail-group.expanded .arrow { transform: rotate(90deg); }
+.detail-group-items { display: none; }
+.detail-group.expanded .detail-group-items { display: block; }
+.detail-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+.detail-item .name { color: var(--text-secondary); }
+.detail-item .val { font-weight: 600; font-variant-numeric: tabular-nums; }
+.detail-item .val.neg { color: var(--red); }
+.detail-item .val.pos { color: var(--green); }
+/* Insurance */
+.ins-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ins-table th, .ins-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid var(--border); }
+.ins-table th { color: var(--text-secondary); font-weight: 500; }
+.ins-table td { font-variant-numeric: tabular-nums; }
+.ins-total {
+  margin-top: 12px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+}
+.ins-charts { margin-bottom: 20px; }
+.ins-bar-row { display: flex; align-items: flex-end; gap: 8px; height: 140px; margin-bottom: 8px; }
+.ins-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+.ins-bar-col { width: 60%; border-radius: 4px 4px 0 0; transition: height .5s; }
+.ins-bar-label { font-size: 9px; white-space: nowrap; margin-bottom: 2px; color: var(--text); font-weight: 600; position: absolute; bottom: 100%; }
+/* Tax rate */
+.tax-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-top: 20px; }
+.tax-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+.tax-bar { width: 50%; border-radius: 4px 4px 0 0; background: var(--green); transition: height .5s; position: relative; }
+.tax-bar-label { font-size: 10px; font-weight: 600; color: var(--text); position: absolute; bottom: 100%; margin-bottom: 2px; }
+.tax-x-label { font-size: 11px; color: var(--text-secondary); }
+.loading { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 14px; }
+.error-msg { text-align: center; padding: 20px; color: var(--red); font-size: 14px; }
+@media (max-width: 480px) {
+  .dashboard-net .value { font-size: 30px; }
+  .stat-item .value { font-size: 16px; }
+  .bar-group .bars { height: 120px; }
+  .bar-col .bar-label { font-size: 9px; }
+}
+@media (min-width: 481px) {
+  .stats-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>工资收入统计</h1>
+    <div class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</div>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="dashboard">概览</div>
+    <div class="tab" data-tab="trend">月度趋势</div>
+    <div class="tab" data-tab="detail">工资明细</div>
+    <div class="tab" data-tab="insurance">五险一金</div>
+    <div class="tab" data-tab="tax">税率分析</div>
+  </div>
+
+  <div id="app">
+    <div class="loading">加载中…</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://kpxfhrqkkhdetjmyhjqj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtweGZocnFra2hkZXRqbXloanFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Mzg0MTMsImV4cCI6MjEwMjQxNDQxM30.w0Rqr7x1SYgzfi0YeJCtaRW_EcigUB0ALEj9N-7p1zU';
+
+let allData = [];
+let periods = [];
+let currentTab = 'dashboard';
+
+async function fetchData() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/payslips?select=period,category,item_name,item_value&order=period.asc`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`
+    }
+  });
+  if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
+  return res.json();
+}
+
+function fmt(n) {
+  const v = Math.abs(n);
+  return (n < 0 ? '-' : '') + v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtShort(n) {
+  const v = Math.abs(n);
+  if (v >= 10000) return (n / 10000).toFixed(1) + 'w';
+  return Math.round(n).toString();
+}
+
+function getNetPay(period) {
+  const item = allData.find(d => d.period === period && d.category.includes('税后') && d.item_name.includes('税后实发'));
+  return item ? item.item_value : 0;
+}
+
+function getGrossIncome(period) {
+  const item = allData.find(d => d.period === period && d.category.includes('税前收入') && d.item_name.includes('总计'));
+  return item ? item.item_value : 0;
+}
+
+function getDeduction(period) {
+  const item = allData.find(d => d.period === period && d.category.includes('税前工资扣除') && d.item_name.includes('总计'));
+  return item ? Math.abs(item.item_value) : 0;
+}
+
+function getTax(period) {
+  const item = allData.find(d => d.period === period && d.category.includes('个人所得税') && d.item_name.includes('工资税'));
+  return item ? item.item_value : 0;
+}
+
+function periodLabel(p) {
+  return p.slice(2, 4) + '/' + p.slice(4, 6);
+}
+
+// ===== Dashboard =====
+function renderDashboard() {
+  const latest = periods[periods.length - 1];
+  const prev = periods.length > 1 ? periods[periods.length - 2] : null;
+  const net = getNetPay(latest);
+  const gross = getGrossIncome(latest);
+  const deduction = getDeduction(latest);
+  const tax = getTax(latest);
+  const prevNet = prev ? getNetPay(prev) : 0;
+  const diff = prev ? net - prevNet : 0;
+
+  let changeHtml = '';
+  if (prev) {
+    const cls = diff >= 0 ? 'up' : 'down';
+    const sign = diff >= 0 ? '+' : '';
+    changeHtml = `<div class="change ${cls}">${sign}${fmt(diff)} 元 vs 上月</div>`;
+  }
+
+  return `
+    <div class="card">
+      <div class="dashboard-net">
+        <div class="label">当月实发工资（${periodLabel(latest)}）</div>
+        <div class="value">${fmt(net)}</div>
+        ${changeHtml}
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="label">税前收入</div>
+          <div class="value">${fmt(gross)}</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">税前扣除</div>
+          <div class="value">-${fmt(deduction)}</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">个人所得税</div>
+          <div class="value">${fmt(tax)}</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">实发到手</div>
+          <div class="value">${fmt(net)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== Trend =====
+function renderTrend() {
+  const recent4 = periods.slice(-4);
+  const nets = recent4.map(getNetPay);
+  const grosses = recent4.map(getGrossIncome);
+  const maxVal = Math.max(...nets, ...grosses, 1);
+  const chartH = 140;
+
+  let bars = recent4.map((p, i) => {
+    const net = nets[i];
+    const gross = grosses[i];
+    const netH = (net / maxVal) * chartH;
+    const grossH = (gross / maxVal) * chartH;
+    return `
+      <div class="bar-group">
+        <div class="bars">
+          <div class="bar-col gross" style="height:${grossH}px" title="税前 ${fmt(gross)}">
+            <span class="bar-label">${fmtShort(gross)}</span>
+          </div>
+          <div class="bar-col net" style="height:${netH}px" title="实发 ${fmt(net)}">
+            <span class="bar-label">${fmtShort(net)}</span>
+          </div>
+        </div>
+        <div class="x-label">${periodLabel(p)}</div>
+      </div>
+    `;
+  }).join('');
+
+  let netBars = recent4.map((p, i) => {
+    const net = nets[i];
+    const netH = (net / maxVal) * chartH;
+    return `
+      <div class="bar-group">
+        <div class="bars">
+          <div class="bar-col single" style="height:${netH}px;width:50%" title="实发 ${fmt(net)}">
+            <span class="bar-label">${fmtShort(net)}</span>
+          </div>
+        </div>
+        <div class="x-label">${periodLabel(p)}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="card">
+      <h2>实发工资趋势（近4个月）</h2>
+      <div class="bar-chart">${netBars}</div>
+    </div>
+    <div class="card">
+      <h2>税前收入 vs 实发工资</h2>
+      <div class="legend">
+        <span><span class="legend-dot gross"></span>税前收入</span>
+        <span><span class="legend-dot net"></span>实发工资</span>
+      </div>
+      <div class="bar-chart">${bars}</div>
+    </div>
+  `;
+}
+
+// ===== Detail =====
+let selectedMonth = null;
+
+function renderDetail() {
+  if (!selectedMonth) selectedMonth = periods[periods.length - 1];
+
+  const options = periods.map(p => `<option value="${p}" ${p === selectedMonth ? 'selected' : ''}>${periodLabel(p)}</option>`).join('');
+
+  const monthData = allData.filter(d => d.period === selectedMonth);
+  const categoryOrder = [
+    '1.税前收入',
+    '2.税前工资扣除',
+    '3.个人所得税扣减',
+    '4.税后应发和扣除',
+    '5.税后应发',
+    '6.参数',
+    '7.奥特斯服务奖剩余'
+  ];
+
+  const presentCats = [...new Set(monthData.map(d => d.category))];
+  const allCats = [...categoryOrder.filter(c => presentCats.some(d => d === c)), ...presentCats.filter(c => !categoryOrder.includes(c))];
+
+  const groups = allCats.map(cat => {
+    const items = monthData.filter(d => d.category === cat);
+    if (items.length === 0) return '';
+    const itemsHtml = items.map(item => {
+      const v = item.item_value;
+      let valClass = '';
+      if (v < 0) valClass = 'neg';
+      else if (cat.includes('税前收入') || cat.includes('税后')) valClass = 'pos';
+      return `<div class="detail-item">
+        <span class="name">${item.item_name}</span>
+        <span class="val ${valClass}">${fmt(v)}</span>
+      </div>`;
+    }).join('');
+    return `
+      <div class="detail-group" onclick="this.classList.toggle('expanded')">
+        <div class="detail-group-header">
+          <span>${cat}</span>
+          <span class="arrow">▶</span>
+        </div>
+        <div class="detail-group-items">${itemsHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="card">
+      <div class="select-row">
+        <select onchange="selectMonth(this.value)">
+          ${options}
+        </select>
+      </div>
+      ${groups || '<div class="loading">无数据</div>'}
+    </div>
+  `;
+}
+
+function selectMonth(m) {
+  selectedMonth = m;
+  render();
+}
+
+// ===== Insurance =====
+function renderInsurance() {
+  const insTypes = [
+    { key: '养老保险', label: '养老保险', color: '#6c5ce7' },
+    { key: '失业保险', label: '失业保险', color: '#00d68f' },
+    { key: '医疗保险', label: '医疗保险', color: '#ff5b5b' },
+    { key: '住房公积金', label: '住房公积金', color: '#fdcb6e' }
+  ];
+
+  const recent4 = periods.slice(-4);
+  const monthTotals = {};
+  recent4.forEach(p => { monthTotals[p] = {}; insTypes.forEach(t => monthTotals[p][t.key] = 0); });
+
+  allData.forEach(d => {
+    if (!recent4.includes(d.period)) return;
+    insTypes.forEach(t => {
+      if (d.item_name.includes(t.key)) {
+        monthTotals[d.period][t.key] += Math.abs(d.item_value);
+      }
+    });
+  });
+
+  const allVals = recent4.flatMap(p => insTypes.map(t => monthTotals[p][t.key]));
+  const maxVal = Math.max(...allVals, 1);
+  const chartH = 120;
+
+  let bars = recent4.map(p => {
+    const cols = insTypes.map(t => {
+      const v = monthTotals[p][t.key];
+      const h = (v / maxVal) * chartH;
+      return `<div class="ins-bar-col" style="height:${h}px;background:${t.color}" title="${t.label}: ${fmt(v)}">
+        <span class="ins-bar-label">${fmtShort(v)}</span>
+      </div>`;
+    }).join('');
+    return `
+      <div class="ins-bar-group">
+        <div style="display:flex;align-items:flex-end;gap:4px;height:${chartH}px">${cols}</div>
+        <div class="x-label">${periodLabel(p)}</div>
+      </div>
+    `;
+  }).join('');
+
+  const grandTotals = insTypes.map(t => {
+    const total = recent4.reduce((s, p) => s + monthTotals[p][t.key], 0);
+    return { ...t, total };
+  });
+  const grandTotal = grandTotals.reduce((s, t) => s + t.total, 0);
+
+  let tableRows = recent4.map(p => {
+    const cells = insTypes.map(t => `<td>${fmt(monthTotals[p][t.key])}</td>`).join('');
+    return `<tr><td>${periodLabel(p)}</td>${cells}</tr>`;
+  }).join('');
+
+  let totalRow = `<tr style="font-weight:700"><td>合计</td>${grandTotals.map(t => `<td>${fmt(t.total)}</td>`).join('')}</tr>`;
+
+  return `
+    <div class="card">
+      <h2>五险一金月度对比</h2>
+      <div class="ins-charts" style="display:flex;gap:8px;align-items:flex-end">${bars}</div>
+      <div class="legend" style="flex-wrap:wrap">
+        ${insTypes.map(t => `<span><span class="legend-dot" style="background:${t.color}"></span>${t.label}</span>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <h2>五险一金明细</h2>
+      <table class="ins-table">
+        <thead>
+          <tr>
+            <th>月份</th>
+            ${insTypes.map(t => `<th>${t.label}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+          ${totalRow}
+        </tbody>
+      </table>
+      <div class="ins-total">累计缴纳总额：${fmt(grandTotal)} 元</div>
+    </div>
+  `;
+}
+
+// ===== Tax Rate =====
+function renderTax() {
+  const recent4 = periods.slice(-4);
+  const rates = recent4.map(p => {
+    const tax = getTax(p);
+    const gross = getGrossIncome(p);
+    return gross > 0 ? (tax / gross) * 100 : 0;
+  });
+  const maxRate = Math.max(...rates, 1);
+
+  const chartH = 120;
+  let bars = recent4.map((p, i) => {
+    const r = rates[i];
+    const h = (r / maxRate) * chartH;
+    return `
+      <div class="tax-bar-group">
+        <div class="tax-bar" style="height:${h}px" title="有效税率 ${r.toFixed(2)}%">
+          <span class="tax-bar-label">${r.toFixed(2)}%</span>
+        </div>
+        <div class="tax-x-label">${periodLabel(p)}</div>
+      </div>
+    `;
+  }).join('');
+
+  const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+
+  return `
+    <div class="card">
+      <h2>有效税率 = 工资税 / 税前收入</h2>
+      <div class="tax-chart">${bars}</div>
+    </div>
+    <div class="card">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="label">平均有效税率</div>
+          <div class="value">${avg.toFixed(2)}%</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">最高有效税率</div>
+          <div class="value">${Math.max(...rates).toFixed(2)}%</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">最低有效税率</div>
+          <div class="value">${Math.min(...rates).toFixed(2)}%</div>
+        </div>
+        <div class="stat-item">
+          <div class="label">最新税率</div>
+          <div class="value">${rates[rates.length - 1].toFixed(2)}%</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== Main render =====
+function render() {
+  const app = document.getElementById('app');
+  if (allData.length === 0) {
+    app.innerHTML = '<div class="loading">加载中…</div>';
+    return;
+  }
+  let html = '';
+  switch (currentTab) {
+    case 'dashboard': html = renderDashboard(); break;
+    case 'trend': html = renderTrend(); break;
+    case 'detail': html = renderDetail(); break;
+    case 'insurance': html = renderInsurance(); break;
+    case 'tax': html = renderTax(); break;
+  }
+  app.innerHTML = html;
+}
+
+// ===== Tab switching =====
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  currentTab = tab.dataset.tab;
+  render();
+});
+
+// ===== Theme =====
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+  try { localStorage.setItem('salary-theme', next); } catch(e) {}
+}
+(function initTheme() {
+  let saved;
+  try { saved = localStorage.getItem('salary-theme'); } catch(e) {}
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeBtn').textContent = '☀️';
+  }
+})();
+
+// ===== Init =====
+(async function() {
+  try {
+    allData = await fetchData();
+    if (!Array.isArray(allData) || allData.length === 0) {
+      document.getElementById('app').innerHTML = '<div class="error-msg">未获取到工资数据</div>';
+      return;
+    }
+    periods = [...new Set(allData.map(d => d.period))].sort();
+    render();
+  } catch (err) {
+    document.getElementById('app').innerHTML = `<div class="error-msg">加载失败: ${err.message}</div>`;
+  }
+})();
+</script>
+</body>
+</html>
