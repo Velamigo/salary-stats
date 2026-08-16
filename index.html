@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>工资收入统计</title>
+<title>💵 我的工资</title>
 <style>
 :root {
   --accent: #6c5ce7;
@@ -217,9 +217,13 @@ select {
 .ins-bar-col { width: 60%; border-radius: 4px 4px 0 0; transition: height .5s; }
 .ins-bar-label { font-size: 9px; white-space: nowrap; margin-bottom: 2px; color: var(--text); font-weight: 600; position: absolute; bottom: 100%; }
 /* Tax rate */
-.tax-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-top: 20px; }
+.tax-chart { display: flex; align-items: flex-end; gap: 8px; height: 180px; padding-top: 20px; }
 .tax-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
-.tax-bar { width: 60%; border-radius: 4px 4px 0 0; background: var(--green-bar); transition: height .5s; position: relative; }
+.tax-bar-group .tax-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; width: 100%; justify-content: center; }
+.tax-bar-group .tax-rate-label { font-size: 10px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.tax-bar { width: 50%; border-radius: 4px 4px 0 0; transition: height .5s; position: relative; }
+.tax-bar.red { background: var(--red); }
+.tax-bar.green { background: var(--green-bar); }
 .tax-bar-label { font-size: 10px; font-weight: 600; color: var(--text); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap; margin-bottom: 2px; }
 .tax-x-label { font-size: 11px; color: var(--text-secondary); }
 .no-data {
@@ -299,7 +303,7 @@ select {
 <div id="loginScreen" style="display:none">
   <div class="login-box">
     <h2>🔒 工资统计</h2>
-    <p>请输入密码查看数据</p>
+    <p>私有数据，请输入密码查看</p>
     <input type="password" class="login-input" id="pwdInput" placeholder="密码" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">进入</button>
     <div class="login-error" id="loginError"></div>
@@ -309,7 +313,7 @@ select {
 <!-- Main App -->
 <div class="container" id="mainApp" style="display:none">
   <header>
-    <h1>工资收入统计</h1>
+    <h1>💵 我的工资</h1>
     <div class="header-right">
       <button class="logout-btn" onclick="doLogout()">退出</button>
       <div class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</div>
@@ -321,7 +325,7 @@ select {
     <div class="tab" data-tab="trend">月度趋势</div>
     <div class="tab" data-tab="detail">工资明细</div>
     <div class="tab" data-tab="insurance">五险一金</div>
-    <div class="tab" data-tab="tax">税率分析</div>
+    <div class="tab" data-tab="tax">税和到手</div>
   </div>
 
   <div id="app">
@@ -455,8 +459,11 @@ function renderDashboard() {
   let changeHtml = '';
   if (prev) {
     const cls = diff >= 0 ? 'up' : 'down';
-    const sign = diff >= 0 ? '+' : '';
-    changeHtml = `<div class="change ${cls}">${sign}${fmt(diff)} 元 vs 上月</div>`;
+    if (diff >= 0) {
+      changeHtml = `<div class="change ${cls}">比上个月多 ${fmt(diff)} 元</div>`;
+    } else {
+      changeHtml = `<div class="change ${cls}">比上个月少 ${fmt(Math.abs(diff))} 元</div>`;
+    }
   }
 
   return `
@@ -707,65 +714,87 @@ function renderInsurance() {
   `;
 }
 
-// ===== Tax Rate =====
+// ===== 税和到手 =====
 function renderTax() {
   const recent4 = periods.slice(-4);
-  const rates = recent4.map(p => {
+  const monthData = recent4.map(p => {
     const tax = getTax(p);
     const gross = getGrossIncome(p);
-    return gross > 0 ? (tax / gross) * 100 : 0;
+    const net = getNetPay(p);
+    return {
+      period: p,
+      tax,
+      gross,
+      net,
+      rate: gross > 0 ? (tax / gross) * 100 : 0,
+      netRatio: gross > 0 ? (net / gross) * 100 : 0
+    };
   });
 
-  // Check if all data is empty
-  const hasData = rates.some(r => r > 0);
+  const hasData = monthData.some(d => d.tax > 0 || d.net > 0);
   if (!hasData) {
     return `
       <div class="card">
-        <h2>有效税率 = 工资税 / 税前收入</h2>
+        <h2>💰 税和到手</h2>
         <div class="no-data">暂无数据</div>
       </div>
     `;
   }
 
-  const maxRate = Math.max(...rates, 1);
+  const maxTax = Math.max(...monthData.map(d => d.tax), 1);
+  const maxRatio = Math.max(...monthData.map(d => d.netRatio), 1);
   const chartH = 120;
-  let bars = recent4.map((p, i) => {
-    const r = rates[i];
-    const h = (r / maxRate) * chartH;
+
+  let bars = monthData.map((d, i) => {
+    const taxH = (d.tax / maxTax) * chartH;
+    const netH = (d.netRatio / maxRatio) * chartH;
     return `
       <div class="tax-bar-group">
-        <div class="tax-bar" style="height:${h}px" title="有效税率 ${r.toFixed(2)}%">
-          <span class="tax-bar-label">${r.toFixed(2)}%</span>
+        <div class="tax-rate-label">${d.rate.toFixed(1)}%</div>
+        <div class="tax-bars">
+          <div class="tax-bar red" style="height:${taxH}px" title="交税 ${fmt(d.tax)} 元">
+          </div>
+          <div class="tax-bar green" style="height:${netH}px" title="到手比例 ${d.netRatio.toFixed(1)}%">
+          </div>
         </div>
-        <div class="tax-x-label">${periodLabel(p)}</div>
+        <div class="tax-x-label">${periodLabel(d.period)}</div>
       </div>
     `;
   }).join('');
 
-  const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+  // 底部总结
+  const totalTax = monthData.reduce((s, d) => s + d.tax, 0);
+  const totalNet = monthData.reduce((s, d) => s + d.net, 0);
+  const avgNet = monthData.length > 0 ? totalNet / monthData.length : 0;
 
   return `
     <div class="card">
-      <h2>有效税率 = 工资税 / 税前收入</h2>
+      <h2>💰 税和到手（近${recent4.length}个月）</h2>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:var(--red)"></span>交了多少税</span>
+        <span><span class="legend-dot" style="background:var(--green-bar)"></span>到手比例</span>
+      </div>
       <div class="tax-chart">${bars}</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:8px;line-height:1.5">
+        <div>红柱 = 这个月交的工资税</div>
+        <div>绿柱 = 到手比例（实发 ÷ 税前 × 100%）</div>
+        <div>柱子上方小字 = 税率（税 ÷ 税前 × 100%）</div>
+      </div>
     </div>
     <div class="card">
+      <h2>📊 累计总结</h2>
       <div class="stats-grid">
         <div class="stat-item">
-          <div class="label">平均有效税率</div>
-          <div class="value">${avg.toFixed(2)}%</div>
+          <div class="label">${recent4.length}个月累计交税</div>
+          <div class="value" style="color:var(--red)">${fmt(totalTax)} 元</div>
         </div>
         <div class="stat-item">
-          <div class="label">最高有效税率</div>
-          <div class="value">${Math.max(...rates).toFixed(2)}%</div>
+          <div class="label">${recent4.length}个月累计到手</div>
+          <div class="value" style="color:var(--green)">${fmt(totalNet)} 元</div>
         </div>
         <div class="stat-item">
-          <div class="label">最低有效税率</div>
-          <div class="value">${Math.min(...rates).toFixed(2)}%</div>
-        </div>
-        <div class="stat-item">
-          <div class="label">最新税率</div>
-          <div class="value">${rates[rates.length - 1].toFixed(2)}%</div>
+          <div class="label">平均每月到手</div>
+          <div class="value">${fmt(avgNet)} 元</div>
         </div>
       </div>
     </div>
