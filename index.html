@@ -7,7 +7,9 @@
 <style>
 :root {
   --accent: #6c5ce7;
-  --green: #00d68f;
+  --blue: #3478f6;
+  --green: #00b86b;
+  --green-bar: #00d68f;
   --red: #ff5b5b;
   --bg: #f5f5f7;
   --card-bg: #ffffff;
@@ -15,6 +17,7 @@
   --text-secondary: #6c6c80;
   --border: #e0e0e6;
   --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --login-bg: #f0f0f5;
 }
 [data-theme="dark"] {
   --bg: #0f0f1a;
@@ -23,6 +26,7 @@
   --text-secondary: #9999aa;
   --border: #2a2a3e;
   --shadow: 0 2px 12px rgba(0,0,0,0.3);
+  --login-bg: #16162a;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
@@ -38,9 +42,11 @@ header {
   align-items: center;
   justify-content: space-between;
   padding: 16px 0 8px;
+  gap: 8px;
 }
+.header-right { display: flex; align-items: center; gap: 8px; }
 h1 { font-size: 22px; font-weight: 700; }
-.theme-toggle {
+.theme-toggle, .logout-btn {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 50%;
@@ -48,6 +54,13 @@ h1 { font-size: 22px; font-weight: 700; }
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 18px;
   box-shadow: var(--shadow);
+}
+.logout-btn {
+  border-radius: 20px;
+  width: auto;
+  padding: 0 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 .tabs {
   display: flex;
@@ -102,7 +115,7 @@ h1 { font-size: 22px; font-weight: 700; }
 /* Charts */
 .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 180px; padding-top: 20px; }
 .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
-.bar-group .bars { display: flex; align-items: flex-end; gap: 3px; height: 140px; width: 100%; justify-content: center; }
+.bar-group .bars { display: flex; align-items: flex-end; gap: 4px; height: 140px; width: 100%; justify-content: center; }
 .bar-col { border-radius: 4px 4px 0 0; min-height: 2px; transition: height .5s ease; position: relative; cursor: pointer; }
 .bar-col .bar-label {
   position: absolute;
@@ -116,13 +129,13 @@ h1 { font-size: 22px; font-weight: 700; }
   font-weight: 600;
 }
 .bar-group .x-label { font-size: 11px; color: var(--text-secondary); }
-.bar-col.gross { background: rgba(108,92,231,.35); }
-.bar-col.net { background: var(--accent); }
-.bar-col.single { background: var(--accent); }
+.bar-col.gross { background: var(--blue); }
+.bar-col.net { background: var(--green-bar); }
+.bar-col.single { background: var(--green-bar); }
 .legend { display: flex; gap: 16px; margin-bottom: 4px; font-size: 12px; color: var(--text-secondary); }
 .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
-.legend-dot.gross { background: rgba(108,92,231,.35); }
-.legend-dot.net { background: var(--accent); }
+.legend-dot.gross { background: var(--blue); }
+.legend-dot.net { background: var(--green-bar); }
 /* Detail */
 .select-row { margin-bottom: 16px; }
 select {
@@ -139,33 +152,54 @@ select {
   background-repeat: no-repeat;
   background-position: right 16px center;
 }
-.detail-group { margin-bottom: 8px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
-.detail-group-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  background: var(--bg);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
+.detail-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
 }
-.detail-group-header .arrow { transition: transform .2s; font-size: 12px; color: var(--text-secondary); }
-.detail-group.expanded .arrow { transform: rotate(90deg); }
-.detail-group-items { display: none; }
-.detail-group.expanded .detail-group-items { display: block; }
-.detail-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
+.detail-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent);
+}
+.detail-empty {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 8px 0;
+}
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 13px;
 }
-.detail-item .name { color: var(--text-secondary); }
-.detail-item .val { font-weight: 600; font-variant-numeric: tabular-nums; }
-.detail-item .val.neg { color: var(--red); }
-.detail-item .val.pos { color: var(--green); }
+.detail-table th, .detail-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.detail-table th {
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 12px;
+}
+.detail-table td.name { color: var(--text-secondary); }
+.detail-table td.val {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.detail-table td.val.neg { color: var(--red); }
+.detail-table td.val.pos { color: var(--green); }
+.detail-table tr:last-child td { border-bottom: none; }
+.detail-table tr.total-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+}
 /* Insurance */
 .ins-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ins-table th, .ins-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid var(--border); }
@@ -185,16 +219,74 @@ select {
 /* Tax rate */
 .tax-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-top: 20px; }
 .tax-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
-.tax-bar { width: 50%; border-radius: 4px 4px 0 0; background: var(--green); transition: height .5s; position: relative; }
-.tax-bar-label { font-size: 10px; font-weight: 600; color: var(--text); position: absolute; bottom: 100%; margin-bottom: 2px; }
+.tax-bar { width: 60%; border-radius: 4px 4px 0 0; background: var(--green-bar); transition: height .5s; position: relative; }
+.tax-bar-label { font-size: 10px; font-weight: 600; color: var(--text); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap; margin-bottom: 2px; }
 .tax-x-label { font-size: 11px; color: var(--text-secondary); }
+.no-data {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
 .loading { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 14px; }
 .error-msg { text-align: center; padding: 20px; color: var(--red); font-size: 14px; }
+/* Login */
+#loginScreen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--login-bg, var(--bg));
+  padding: 20px;
+}
+.login-box {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.login-box h2 { font-size: 20px; margin-bottom: 8px; font-weight: 700; }
+.login-box p { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+.login-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  margin-bottom: 12px;
+  text-align: center;
+  letter-spacing: 2px;
+}
+.login-input:focus { outline: none; border-color: var(--accent); }
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.login-btn:active { opacity: .8; }
+.login-error {
+  color: var(--red);
+  font-size: 13px;
+  min-height: 18px;
+  margin-top: 8px;
+}
 @media (max-width: 480px) {
   .dashboard-net .value { font-size: 30px; }
   .stat-item .value { font-size: 16px; }
   .bar-group .bars { height: 120px; }
   .bar-col .bar-label { font-size: 9px; }
+  .tax-bar-label { font-size: 9px; }
 }
 @media (min-width: 481px) {
   .stats-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
@@ -202,10 +294,26 @@ select {
 </style>
 </head>
 <body>
-<div class="container">
+
+<!-- Login Screen -->
+<div id="loginScreen" style="display:none">
+  <div class="login-box">
+    <h2>🔒 工资统计</h2>
+    <p>请输入密码查看数据</p>
+    <input type="password" class="login-input" id="pwdInput" placeholder="密码" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">进入</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="container" id="mainApp" style="display:none">
   <header>
     <h1>工资收入统计</h1>
-    <div class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</div>
+    <div class="header-right">
+      <button class="logout-btn" onclick="doLogout()">退出</button>
+      <div class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</div>
+    </div>
   </header>
 
   <div class="tabs" id="tabs">
@@ -224,11 +332,55 @@ select {
 <script>
 const SUPABASE_URL = 'https://kpxfhrqkkhdetjmyhjqj.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtweGZocnFra2hkZXRqbXloanFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4Mzg0MTMsImV4cCI6MjEwMjQxNDQxM30.w0Rqr7x1SYgzfi0YeJCtaRW_EcigUB0ALEj9N-7p1zU';
+const PASSWORD = 'salary2026';
+const AUTH_KEY = 'salary-auth';
 
 let allData = [];
 let periods = [];
 let currentTab = 'dashboard';
+let dataLoaded = false;
 
+// ===== Auth =====
+function checkAuth() {
+  try {
+    return sessionStorage.getItem(AUTH_KEY) === '1';
+  } catch(e) { return false; }
+}
+
+function doLogin() {
+  const val = document.getElementById('pwdInput').value;
+  if (val === PASSWORD) {
+    try { sessionStorage.setItem(AUTH_KEY, '1'); } catch(e) {}
+    showApp();
+  } else {
+    document.getElementById('loginError').textContent = '密码错误，请重试';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('pwdInput').focus();
+  }
+}
+
+function doLogout() {
+  try { sessionStorage.removeItem(AUTH_KEY); } catch(e) {}
+  showLogin();
+}
+
+function showLogin() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  const inp = document.getElementById('pwdInput');
+  if (inp) { inp.value = ''; inp.focus(); }
+  const err = document.getElementById('loginError');
+  if (err) err.textContent = '';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  if (!dataLoaded) loadData();
+  else render();
+}
+
+// ===== Data =====
 async function fetchData() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/payslips?select=period,category,item_name,item_value&order=period.asc`, {
     headers: {
@@ -240,15 +392,29 @@ async function fetchData() {
   return res.json();
 }
 
+async function loadData() {
+  try {
+    allData = await fetchData();
+    if (!Array.isArray(allData) || allData.length === 0) {
+      document.getElementById('app').innerHTML = '<div class="error-msg">未获取到工资数据</div>';
+      return;
+    }
+    periods = [...new Set(allData.map(d => d.period))].sort();
+    dataLoaded = true;
+    render();
+  } catch (err) {
+    document.getElementById('app').innerHTML = `<div class="error-msg">加载失败: ${err.message}</div>`;
+  }
+}
+
 function fmt(n) {
   const v = Math.abs(n);
   return (n < 0 ? '-' : '') + v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function fmtShort(n) {
-  const v = Math.abs(n);
-  if (v >= 10000) return (n / 10000).toFixed(1) + 'w';
-  return Math.round(n).toString();
+function fmtInt(n) {
+  const v = Math.round(n);
+  return (n < 0 ? '-' : '') + Math.abs(v).toLocaleString('zh-CN');
 }
 
 function getNetPay(period) {
@@ -339,10 +505,10 @@ function renderTrend() {
       <div class="bar-group">
         <div class="bars">
           <div class="bar-col gross" style="height:${grossH}px" title="税前 ${fmt(gross)}">
-            <span class="bar-label">${fmtShort(gross)}</span>
+            <span class="bar-label">${fmtInt(gross)}</span>
           </div>
           <div class="bar-col net" style="height:${netH}px" title="实发 ${fmt(net)}">
-            <span class="bar-label">${fmtShort(net)}</span>
+            <span class="bar-label">${fmtInt(net)}</span>
           </div>
         </div>
         <div class="x-label">${periodLabel(p)}</div>
@@ -357,7 +523,7 @@ function renderTrend() {
       <div class="bar-group">
         <div class="bars">
           <div class="bar-col single" style="height:${netH}px;width:50%" title="实发 ${fmt(net)}">
-            <span class="bar-label">${fmtShort(net)}</span>
+            <span class="bar-label">${fmtInt(net)}</span>
           </div>
         </div>
         <div class="x-label">${periodLabel(p)}</div>
@@ -367,7 +533,10 @@ function renderTrend() {
 
   return `
     <div class="card">
-      <h2>实发工资趋势（近4个月）</h2>
+      <h2>实发工资趋势（近${recent4.length}个月）</h2>
+      <div class="legend">
+        <span><span class="legend-dot net"></span>实发工资</span>
+      </div>
       <div class="bar-chart">${netBars}</div>
     </div>
     <div class="card">
@@ -390,6 +559,7 @@ function renderDetail() {
   const options = periods.map(p => `<option value="${p}" ${p === selectedMonth ? 'selected' : ''}>${periodLabel(p)}</option>`).join('');
 
   const monthData = allData.filter(d => d.period === selectedMonth);
+  // All 7 categories in order
   const categoryOrder = [
     '1.税前收入',
     '2.税前工资扣除',
@@ -400,29 +570,40 @@ function renderDetail() {
     '7.奥特斯服务奖剩余'
   ];
 
-  const presentCats = [...new Set(monthData.map(d => d.category))];
-  const allCats = [...categoryOrder.filter(c => presentCats.some(d => d === c)), ...presentCats.filter(c => !categoryOrder.includes(c))];
-
-  const groups = allCats.map(cat => {
-    const items = monthData.filter(d => d.category === cat);
-    if (items.length === 0) return '';
-    const itemsHtml = items.map(item => {
+  const groups = categoryOrder.map(cat => {
+    // Match flexibly: allow spaces differences
+    const items = monthData.filter(d => d.category.replace(/\s+/g, '') === cat.replace(/\s+/g, ''));
+    if (items.length === 0) {
+      return `
+        <div class="detail-card">
+          <div class="detail-card-title">${cat}</div>
+          <div class="detail-empty">本月无此项</div>
+        </div>
+      `;
+    }
+    // Build a table
+    const rows = items.map(item => {
       const v = item.item_value;
       let valClass = '';
       if (v < 0) valClass = 'neg';
-      else if (cat.includes('税前收入') || cat.includes('税后')) valClass = 'pos';
-      return `<div class="detail-item">
-        <span class="name">${item.item_name}</span>
-        <span class="val ${valClass}">${fmt(v)}</span>
-      </div>`;
+      else if (cat.includes('税前收入') || cat.includes('税后应发') && !cat.includes('扣除')) valClass = 'pos';
+      const isTotal = item.item_name.includes('总计') || item.item_name.includes('合计');
+      return `
+        <tr class="${isTotal ? 'total-row' : ''}">
+          <td class="name">${item.item_name}</td>
+          <td class="val ${valClass}">${fmt(v)}</td>
+        </tr>
+      `;
     }).join('');
     return `
-      <div class="detail-group" onclick="this.classList.toggle('expanded')">
-        <div class="detail-group-header">
-          <span>${cat}</span>
-          <span class="arrow">▶</span>
-        </div>
-        <div class="detail-group-items">${itemsHtml}</div>
+      <div class="detail-card">
+        <div class="detail-card-title">${cat}</div>
+        <table class="detail-table">
+          <thead>
+            <tr><th>项目</th><th style="text-align:right">金额（元）</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
     `;
   }).join('');
@@ -434,8 +615,8 @@ function renderDetail() {
           ${options}
         </select>
       </div>
-      ${groups || '<div class="loading">无数据</div>'}
     </div>
+    ${groups}
   `;
 }
 
@@ -475,7 +656,7 @@ function renderInsurance() {
       const v = monthTotals[p][t.key];
       const h = (v / maxVal) * chartH;
       return `<div class="ins-bar-col" style="height:${h}px;background:${t.color}" title="${t.label}: ${fmt(v)}">
-        <span class="ins-bar-label">${fmtShort(v)}</span>
+        <span class="ins-bar-label">${fmtInt(v)}</span>
       </div>`;
     }).join('');
     return `
@@ -534,8 +715,19 @@ function renderTax() {
     const gross = getGrossIncome(p);
     return gross > 0 ? (tax / gross) * 100 : 0;
   });
-  const maxRate = Math.max(...rates, 1);
 
+  // Check if all data is empty
+  const hasData = rates.some(r => r > 0);
+  if (!hasData) {
+    return `
+      <div class="card">
+        <h2>有效税率 = 工资税 / 税前收入</h2>
+        <div class="no-data">暂无数据</div>
+      </div>
+    `;
+  }
+
+  const maxRate = Math.max(...rates, 1);
   const chartH = 120;
   let bars = recent4.map((p, i) => {
     const r = rates[i];
@@ -621,25 +813,21 @@ function toggleTheme() {
   try { saved = localStorage.getItem('salary-theme'); } catch(e) {}
   if (saved) {
     document.documentElement.setAttribute('data-theme', saved);
-    document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
   } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     document.documentElement.setAttribute('data-theme', 'dark');
-    document.getElementById('themeBtn').textContent = '☀️';
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = '☀️';
   }
 })();
 
 // ===== Init =====
-(async function() {
-  try {
-    allData = await fetchData();
-    if (!Array.isArray(allData) || allData.length === 0) {
-      document.getElementById('app').innerHTML = '<div class="error-msg">未获取到工资数据</div>';
-      return;
-    }
-    periods = [...new Set(allData.map(d => d.period))].sort();
-    render();
-  } catch (err) {
-    document.getElementById('app').innerHTML = `<div class="error-msg">加载失败: ${err.message}</div>`;
+(function init() {
+  if (checkAuth()) {
+    showApp();
+  } else {
+    showLogin();
   }
 })();
 </script>
