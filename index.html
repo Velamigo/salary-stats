@@ -653,6 +653,16 @@ function renderDashboard() {
   // Group 4: 到手
   const netCards = buildSparkCard('实发工资', getSeries('税后实发', '税后', 4));
 
+  // Group 5: 参数
+  const paramCards = [
+    buildSparkCard('自动缺勤每日扣款', getSeries('自动缺勤每日扣款金额', '参数', 4)),
+    buildSparkCard('基本工资/天', getSeries('基本工资/天', '参数', 4)),
+    buildSparkCard('津贴/天', getSeries('津贴/天', '参数', 4)),
+    buildSparkCard('加班费/每小时', getSeries('加班费/每小时', '参数', 4)),
+    buildSparkCard('公积金基数', getSeries('公积金基数', '参数', 4)),
+    buildSparkCard('社会保险基数', getSeries('社会保险基数', '参数', 4)),
+  ].join('');
+
   return `
     <!-- Summary cards -->
     <div class="summary-grid">
@@ -693,6 +703,9 @@ function renderDashboard() {
 
     <div class="group-title">✅ 到手</div>
     <div class="spark-grid">${netCards}</div>
+
+    <div class="group-title">📐 参数</div>
+    <div class="spark-grid">${paramCards}</div>
   `;
 }
 
@@ -711,8 +724,7 @@ function renderDetail() {
     '3.个人所得税扣减',
     '4.税后应发和扣除',
     '5.税后应发',
-    '6.参数',
-    '7.奥特斯服务奖剩余'
+    '6.参数'
   ];
 
   const groups = categoryOrder.map(cat => {
