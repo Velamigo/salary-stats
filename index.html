@@ -149,6 +149,7 @@ button { font-family: inherit; }
 .dual-legend { display: flex; align-items: center; gap: 20px; padding: 6px 2px 4px; font-size: 12px; color: var(--muted); font-weight: 600; }
 .dual-legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: middle; }
 .dual-legend .lg-net { background: var(--green); } .dual-legend .lg-gross { background: #b3b3b3; }
+.dual-legend .lg-soc { background: #539df5; } .dual-legend .lg-tax { background: #ffa42b; }
 .dual-legend .lg-hint { margin-left: auto; color: var(--faint); font-weight: 400; font-size: 11px; }
 .hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--hairline); border-radius: 12px; overflow: hidden; margin-top: 14px; }
 .hs-cell { background: var(--surface2); padding: 14px 12px; text-align: center; }
@@ -231,6 +232,8 @@ table.mx .col-m { min-width: 82px; }
 .spark-tooltip.visible { opacity: 1; }
 .spark-tooltip .st-month { font-size: 10.5px; color: var(--faint); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 .spark-tooltip .st-value { font-size: 16px; font-weight: 800; }
+.spark-tooltip .st-sub { font-size: 11.5px; color: var(--faint); font-weight: 500; margin-top: 2px; }
+.spark-tooltip .st-sub b { color: var(--text); font-weight: 700; }
 .loading, .error-msg, .no-data { text-align: center; padding: 60px 20px; color: var(--faint); font-size: 14px; }
 .error-msg { color: var(--red); }
 .loading .spin { width: 26px; height: 26px; margin: 0 auto 14px; border-radius: 50%; border: 3px solid var(--surface2); border-top-color: var(--green); animation: sp .8s linear infinite; }
@@ -589,63 +592,41 @@ function buildSparkCard(title, values) {
   </div>`;
 }
 
-// ===== 双线叠加图 (税前 vs 到手 + 中间差额带, 按真实像素宽绘制) =====
-function buildDualLine(netSeries, grossSeries, months, w) {
+// ===== 月度堆叠分解柱 (到手/五险一金/个税 垒成税前; 台阶=段高变化) =====
+function buildDualBars(netSeries, socialSeries, taxSeries, months, w) {
   const count = months.length;
-  if (count < 2) return '';
+  if (count < 1) return '';
   w = Math.max(320, Math.round(w || 600));
-  const h = 220, padL = 52, padR = 16, padT = 16, padB = 26;
+  const h = 240, padL = 52, padR = 14, padT = 18, padB = 28;
   const usableW = w - padL - padR, usableH = h - padT - padB;
-  const all = [...netSeries, ...grossSeries];
-  let min = Math.min(...all), max = Math.max(...all);
-  // Y轴不贴底, 留10%呼吸; 且让差额带占比放大: 用数据实际min/max而非0基线
-  const span = max - min || 1;
-  min = Math.max(0, min - span * 0.12); max = max + span * 0.10;
-  const r = max - min || 1;
-  const px = i => padL + (usableW * i) / (count - 1);
-  const py = v => padT + usableH - ((v - min) / r) * usableH;
-  const gp = grossSeries.map((v, i) => ({ x: px(i), y: py(v) }));
-  const np = netSeries.map((v, i) => ({ x: px(i), y: py(v) }));
-  const gLine = smoothPath(gp), nLine = smoothPath(np);
-  // 差额带: 税前线(正向) → 到手线(反向) 闭合, 视觉=被扣掉的部分
-  const npRev = np.slice().reverse();
-  const band = smoothPath(gp) + catmullCmdsBack(npRev) + ` L${gp[0].x.toFixed(1)},${gp[0].y.toFixed(1)} Z`;
-  // 网格 + Y轴刻度(5条)
-  let grid = '', ticks = 4;
+  const tops = months.map((m, i) => netSeries[i] + socialSeries[i] + taxSeries[i]); // =税前
+  const max = Math.max(...tops) * 1.06 || 1;   // 柱必须0基线, 比例才不失真
+  const py = v => padT + usableH - (v / max) * usableH;
+  const slot = usableW / count;
+  const bw = Math.min(56, slot * 0.58);
+  const C_NET = '#1ed760', C_SOC = '#539df5', C_TAX = '#ffa42b';
+  let grid = '';
+  const ticks = 4;
   for (let t = 0; t <= ticks; t++) {
-    const val = min + (r * t) / ticks, y = py(val);
+    const val = (max * t) / ticks, y = py(val);
     grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w-padR}" y2="${y.toFixed(1)}" stroke="var(--hairline)" stroke-width="1"/>`;
     grid += `<text x="${padL-8}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--faint)" font-weight="600">${fmtY(val)}</text>`;
   }
-  const gid = 'na' + (++SID);
-  // 月度竖网格(悬停引导线)
-  const vgrid = months.map((m,i)=>`<line x1="${px(i).toFixed(1)}" y1="${padT}" x2="${px(i).toFixed(1)}" y2="${(h-padB).toFixed(1)}" stroke="var(--hairline)" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"/>`).join('');
-  const gDots = gp.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===count-1?4.5:3}" fill="#b3b3b3" stroke="var(--surface)" stroke-width="${i===count-1?2:1}"/>`).join('');
-  const nDots = np.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===count-1?4.5:3}" fill="#1ed760" stroke="var(--surface)" stroke-width="${i===count-1?2:1}"/>`).join('');
-  // 末端数值标注
-  const lastG = grossSeries[count-1], lastN = netSeries[count-1];
-  const labels = `<text x="${(px(count-1)-4).toFixed(1)}" y="${(py(lastG)-9).toFixed(1)}" text-anchor="end" font-size="10.5" font-weight="800" fill="#b3b3b3">${fmtShort(lastG)}</text>`+
-    `<text x="${(px(count-1)-4).toFixed(1)}" y="${(py(lastN)+15).toFixed(1)}" text-anchor="end" font-size="10.5" font-weight="800" fill="#1ed760">${fmtShort(lastN)}</text>`;
-  const axis = months.map((m,i)=>`<text x="${px(i).toFixed(1)}" y="${h-7}" text-anchor="middle" font-size="10" fill="var(--faint)" font-weight="600">${periodLabel(m)}</text>`).join('');
-  const hits = months.map((m,i)=>`<rect class="dual-hit" x="${(px(i)-usableW/(count-1)/2).toFixed(1)}" y="0" width="${(usableW/(count-1)).toFixed(1)}" height="${h}" fill="transparent" style="cursor:pointer" data-month="${m}" data-gross="¥${fmt(grossSeries[i])}" data-net="¥${fmt(netSeries[i])}"/>`).join('');
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="dual-svg">
-    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f3727f" stop-opacity="0.16"/><stop offset="100%" stop-color="#1ed760" stop-opacity="0.10"/>
-    </linearGradient></defs>
-    ${grid}${vgrid}
-    <path d="${band}" fill="url(#${gid})" stroke="none"/>
-    <path d="${gLine}" fill="none" stroke="#b3b3b3" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="${nLine}" fill="none" stroke="#1ed760" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
-    ${gDots}${nDots}${labels}${axis}${hits}
-  </svg>`;
-}
-// 反向曲线段(用于闭合差额带): 从右往左画到手线
-function catmullCmdsBack(pts) {
-  // pts 已是逆序点集; 用平滑反向连接, 与正向对称
-  if (pts.length < 2) return ` L${pts[0] ? pts[0].x.toFixed(1) : 0},${pts[0] ? pts[0].y.toFixed(1) : 0}`;
-  let s = ` L${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-  s += catmullCmds(pts);
-  return s;
+  const bars = months.map((m, i) => {
+    const cx = padL + slot * i + slot / 2, x0 = cx - bw / 2;
+    const yNet = py(netSeries[i]), ySoc = py(netSeries[i] + socialSeries[i]), yTop = py(tops[i]);
+    const r = Math.min(4, bw / 6);
+    return `
+      <rect x="${x0.toFixed(1)}" y="${yNet.toFixed(1)}" width="${bw.toFixed(1)}" height="${(py(0)-yNet).toFixed(1)}" fill="${C_NET}" opacity="0.92"/>
+      <rect x="${x0.toFixed(1)}" y="${ySoc.toFixed(1)}" width="${bw.toFixed(1)}" height="${(yNet-ySoc).toFixed(1)}" fill="${C_SOC}" opacity="0.85"/>
+      <rect x="${x0.toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${(ySoc-yTop).toFixed(1)}" fill="${C_TAX}" opacity="0.9" rx="${r}" ry="${r}"/>
+      <rect x="${x0.toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.min(6,(ySoc-yTop)).toFixed(1)}" fill="${C_TAX}" opacity="0.9"/>
+      <text x="${cx.toFixed(1)}" y="${(yTop-6).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--muted)">${fmtShort(tops[i])}</text>
+      <text x="${cx.toFixed(1)}" y="${h-8}" text-anchor="middle" font-size="10" fill="var(--faint)" font-weight="600">${periodLabel(m)}</text>
+      <rect class="dual-hit" x="${(cx-slot/2).toFixed(1)}" y="0" width="${slot.toFixed(1)}" height="${h}" fill="transparent" style="cursor:pointer"
+        data-month="${m}" data-net="¥${fmt(netSeries[i])}" data-soc="¥${fmt(socialSeries[i])}" data-tax="¥${fmt(taxSeries[i])}" data-gross="¥${fmt(tops[i])}"/>`;
+  }).join('');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="dual-svg">${grid}${bars}</svg>`;
 }
 // Y轴刻度金额(千分, 无小数)
 function fmtY(v) {
@@ -659,8 +640,8 @@ function paintSparks() {
     const spec = SPARKREG[holder.dataset.sp];
     if (!spec) return;
     const w = holder.clientWidth || 200;
-    holder.innerHTML = spec.kind === 'dual'
-      ? buildDualLine(spec.net, spec.gross, spec.months, w)
+    holder.innerHTML = spec.kind === 'bars'
+      ? buildDualBars(spec.net, spec.soc, spec.tax, spec.months, w)
       : buildSparkline(spec.values, spec.isUp, spec.months, w);
   });
 }
@@ -690,10 +671,12 @@ function renderDashboard() {
   const winLabel = win.length === periods.length ? '全部' : win.length + '个月';
 
   const netSeries = win.map(p => getNetPay(p));
-  const grossSeries = win.map(p => getGrossTotal(p));
+  const socialSeries = win.map(p => getDeductionTotal(p));
+  const taxSeries = win.map(p => Math.abs(getTax(p)));
+  const grossSeries = win.map((p, i) => netSeries[i] + socialSeries[i] + taxSeries[i]);
   const gapPct = gross > 0 ? ((gross - net) / gross) * 100 : 0;
   const hid = 'd' + (++SID);
-  SPARKREG[hid] = { kind: 'dual', net: netSeries, gross: grossSeries, months: win };
+  SPARKREG[hid] = { kind: 'bars', net: netSeries, soc: socialSeries, tax: taxSeries, months: win };
   const heroCard = `<div class="hero-card net">
     <div class="hero-top">
       <div>
@@ -706,7 +689,7 @@ function renderDashboard() {
       <div class="hero-gap"><div class="k">当月被扣比例</div><div class="v">${gapPct.toFixed(1)}%</div></div>
     </div>
     <div class="dual-holder" data-sp="${hid}"></div>
-    <div class="dual-legend"><span><i class="lg-net"></i>到手工资</span><span><i class="lg-gross"></i>税前工资</span><span class="lg-hint">点/悬停月份看两值</span></div>
+    <div class="dual-legend"><span><i class="lg-net"></i>到手</span><span><i class="lg-soc"></i>五险一金</span><span><i class="lg-tax"></i>个税</span><span class="lg-hint">柱顶=税前 · 点柱看四项</span></div>
   </div>`;
 
   const groupsHtml = GROUPS.map(g => {
@@ -835,9 +818,11 @@ function showSparkTooltip(hitArea, cardEl) {
 function hideSparkTooltip() { if (sparkTooltipEl) sparkTooltipEl.classList.remove('visible'); }
 function showDualTooltip(hitEl) {
   const tt = ensureSparkTooltip();
-  tt.innerHTML = `<div class="st-month">${periodLabel(hitEl.dataset.month)}</div>
-    <div class="st-value" style="color:var(--green)">到手 ${hitEl.dataset.net}</div>
-    <div class="st-value" style="color:var(--muted);font-size:13px">税前 ${hitEl.dataset.gross}</div>`;
+  const d = hitEl.dataset;
+  tt.innerHTML = `<div class="st-month">${periodLabel(d.month)}</div>
+    <div class="st-value" style="color:var(--green)">到手 ${d.net}</div>
+    <div class="st-sub">税前 <b>${d.gross}</b></div>
+    <div class="st-sub">五险一金 <b style="color:#539df5">${d.soc}</b> · 个税 <b style="color:#ffa42b">${d.tax}</b></div>`;
   const r = hitEl.getBoundingClientRect();
   tt.style.left = (r.left + r.width / 2) + 'px';
   tt.style.top = r.top + window.scrollY - 6 + 'px';
