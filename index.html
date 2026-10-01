@@ -1,413 +1,275 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💵 我的工资</title>
+<title>💵 我的工资 · 看板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
 <style>
 :root {
-  --accent: #6c5ce7;
-  --blue: #3478f6;
-  --green: #00b86b;
-  --green-bar: #00d68f;
-  --red: #ff5b5b;
-  --orange: #fd7728;
-  --bg: #f5f5f7;
-  --card-bg: #ffffff;
-  --text: #1a1a2e;
-  --text-secondary: #6c6c80;
-  --border: #e0e0e6;
-  --shadow: 0 2px 12px rgba(0,0,0,0.06);
-  --login-bg: #f0f0f5;
+  --green: #1ed760; --green-deep: #169c46;
+  --red: #f3727f; --orange: #ffa42b; --blue: #539df5;
+  --bg: #121212; --surface: #181818; --surface2: #1f1f1f; --elev: #282828;
+  --text: #ffffff; --muted: #b3b3b3; --faint: #7c7c7c;
+  --hairline: rgba(255,255,255,0.07);
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.35);
+  --shadow-pop: 0 8px 24px rgba(0,0,0,0.5);
+  --accent: var(--green); --accent-ink: #000;
 }
-[data-theme="dark"] {
-  --bg: #0f0f1a;
-  --card-bg: #1a1a2e;
-  --text: #e8e8f0;
-  --text-secondary: #9999aa;
-  --border: #2a2a3e;
-  --shadow: 0 2px 12px rgba(0,0,0,0.3);
-  --login-bg: #16162a;
+[data-theme="light"] {
+  --bg: #f6f7f8; --surface: #ffffff; --surface2: #f0f1f2; --elev: #e7e8ea;
+  --text: #121212; --muted: #5a5c5e; --faint: #9a9da0;
+  --hairline: rgba(0,0,0,0.07);
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.07);
+  --shadow-pop: 0 8px 24px rgba(0,0,0,0.14);
+  --accent: var(--green-deep); --accent-ink: #fff;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scrollbar-color: var(--elev) transparent; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Noto Sans SC', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  transition: background .3s, color .3s;
-}
-.container { max-width: 720px; margin: 0 auto; padding: 16px 12px 60px; }
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 0 8px;
-  gap: 8px;
-}
-.header-right { display: flex; align-items: center; gap: 8px; }
-h1 { font-size: 22px; font-weight: 700; }
-.theme-toggle, .logout-btn {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  width: 40px; height: 40px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 18px;
-  box-shadow: var(--shadow);
-}
-.logout-btn {
-  border-radius: 20px;
-  width: auto;
-  padding: 0 14px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 4px;
-}
-.tab {
-  flex: 1;
-  padding: 10px 16px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  background: var(--card-bg);
-  color: var(--text-secondary);
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  text-align: center;
-  transition: all .2s;
-  box-shadow: var(--shadow);
-}
-.tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-/* Cards */
-.card {
-  background: var(--card-bg);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: var(--shadow);
-}
-
-/* Group title */
-.group-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 20px 0 10px;
-  padding-left: 4px;
-  color: var(--text);
-}
-
-/* Summary cards (top 4 big numbers) */
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.summary-card {
-  background: var(--card-bg);
-  border-radius: 12px;
-  padding: 16px 14px;
-  box-shadow: var(--shadow);
-  text-align: center;
-}
-.summary-card.primary {
-  grid-column: span 2;
-  padding: 20px 14px;
-}
-.summary-card .s-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-.summary-card .s-value {
-  font-size: 20px;
-  font-weight: 700;
+  font-family: 'DM Sans', -apple-system, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg); color: var(--text); min-height: 100vh;
+  transition: background .25s, color .25s;
   font-variant-numeric: tabular-nums;
 }
-.summary-card.primary .s-value {
-  font-size: 32px;
-  color: var(--accent);
+button { font-family: inherit; }
+/* ---------- pills & chips ---------- */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: none; cursor: pointer; border-radius: 999px;
+  background: var(--surface2); color: var(--muted);
+  font-size: 13px; font-weight: 700; padding: 8px 16px;
+  transition: transform .12s, background .15s, color .15s;
+  white-space: nowrap; user-select: none;
 }
-.summary-card .s-change {
-  font-size: 12px;
-  margin-top: 4px;
-  font-variant-numeric: tabular-nums;
+.pill:hover { background: var(--elev); color: var(--text); }
+.pill:active { transform: scale(.96); }
+.pill.on { background: var(--accent); color: var(--accent-ink); }
+.pill.on:hover { background: var(--accent); filter: brightness(1.08); color: var(--accent-ink); }
+.pill.ghost { background: transparent; box-shadow: inset 0 0 0 1px var(--faint); }
+.pill.ghost:hover { background: var(--surface2); }
+.chip {
+  display: inline-flex; align-items: center; border-radius: 999px;
+  background: var(--surface2); color: var(--muted);
+  font-size: 11px; font-weight: 700; padding: 3px 10px; letter-spacing: .3px;
 }
-.s-change.up { color: var(--green); }
-.s-change.down { color: var(--red); }
-
-/* Tax rate line */
-.tax-rate-line {
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-.tax-rate-line span { font-weight: 600; color: var(--text); }
-
-/* Sparkline cards grid */
-.spark-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-@media (min-width: 560px) {
-  .spark-grid { grid-template-columns: 1fr 1fr 1fr; }
-}
-.spark-card {
-  background: var(--card-bg);
-  border-radius: 10px;
-  padding: 12px;
-  box-shadow: var(--shadow);
-  position: relative;
-}
-.spark-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 8px;
-}
-.spark-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-.spark-current {
-  font-size: 15px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.spark-current.up { color: var(--green); }
-.spark-current.down { color: var(--red); }
-.spark-current.flat { color: var(--text-secondary); }
-
-/* SVG sparkline */
-.sparkline {
-  width: 100%;
-  height: 60px;
-  display: block;
-}
-.spark-axis-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2px;
-  font-size: 10px;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Detail page */
-.select-row { margin-bottom: 16px; }
-select {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 15px;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-}
-.detail-card {
-  background: var(--card-bg);
-  border-radius: 12px;
-  padding: 18px;
-  margin-bottom: 12px;
-  box-shadow: var(--shadow);
-}
-.detail-card-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--accent);
-}
-.detail-empty {
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-style: italic;
-  padding: 8px 0;
-}
-.detail-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-.detail-table th, .detail-table td {
-  padding: 10px 8px;
-  border-bottom: 1px solid var(--border);
-}
-.detail-table th {
-  text-align: left;
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 12px;
-}
-.detail-table td.name { color: var(--text-secondary); }
-.detail-table td.val {
-  text-align: right;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.detail-table td.val.neg { color: var(--red); }
-.detail-table tr:last-child td { border-bottom: none; }
-.detail-table tr.total-row td {
-  font-weight: 700;
-  border-top: 2px solid var(--border);
-}
-
-/* Loading / error / no-data */
-.no-data {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-.loading { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 14px; }
-.error-msg { text-align: center; padding: 20px; color: var(--red); font-size: 14px; }
-
-/* Login */
+/* ---------- login ---------- */
 #loginScreen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--login-bg, var(--bg));
-  padding: 20px;
+  min-height: 100vh; display: none; align-items: center; justify-content: center;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(30,215,96,0.13), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(83,157,245,0.08), transparent 60%),
+    var(--bg);
+  padding: 24px;
 }
 .login-box {
-  background: var(--card-bg);
-  border-radius: 16px;
-  padding: 32px 24px;
-  width: 100%;
-  max-width: 360px;
-  box-shadow: var(--shadow);
-  text-align: center;
+  background: var(--surface); border-radius: 16px; padding: 40px 32px 32px;
+  width: 100%; max-width: 380px; box-shadow: var(--shadow-pop); text-align: center;
 }
-.login-box h2 { font-size: 20px; margin-bottom: 8px; font-weight: 700; }
-.login-box p { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+.login-logo { width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  font-size: 26px; box-shadow: 0 8px 24px rgba(30,215,96,.35); }
+.login-box h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -.3px; }
+.login-box p { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
 .login-input {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 16px;
-  margin-bottom: 12px;
-  text-align: center;
-  letter-spacing: 2px;
+  width: 100%; padding: 14px 18px; border-radius: 999px; border: none;
+  background: var(--surface2); color: var(--text); font-size: 15px; margin-bottom: 12px;
+  box-shadow: inset 0 0 0 1px transparent; transition: box-shadow .15s; text-align: center; letter-spacing: 2px;
 }
-.login-input:focus { outline: none; border-color: var(--accent); }
+.login-input:focus { outline: none; box-shadow: inset 0 0 0 1px var(--faint); }
 .login-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 10px;
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+  width: 100%; padding: 14px; border-radius: 999px; border: none;
+  background: var(--accent); color: var(--accent-ink);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  letter-spacing: 1.6px; text-transform: uppercase; transition: filter .15s, transform .1s;
 }
-.login-btn:active { opacity: .8; }
-.login-error {
-  color: var(--red);
-  font-size: 13px;
-  min-height: 18px;
-  margin-top: 8px;
+.login-btn:hover { filter: brightness(1.08); }
+.login-btn:active { transform: scale(.98); }
+.login-error { color: var(--red); font-size: 13px; min-height: 18px; margin-top: 10px; font-weight: 600; }
+.login-forgot { margin-top: 14px; font-size: 13px; }
+.login-forgot a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--faint); padding-bottom: 1px; }
+.login-forgot a:hover { color: var(--text); }
+/* ---------- topbar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(18,18,18,0.82);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--hairline);
 }
-
-@media (max-width: 380px) {
-  .summary-card.primary .s-value { font-size: 26px; }
-  .summary-card .s-value { font-size: 17px; }
-  .spark-grid { grid-template-columns: 1fr; }
+[data-theme="light"] .topbar { background: rgba(246,247,248,0.85); }
+.topbar-in { max-width: 1080px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; letter-spacing: -.2px; margin-right: auto; }
+.brand-dot { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.seg { display: flex; gap: 4px; background: var(--surface2); border-radius: 999px; padding: 4px; }
+.seg .pill { padding: 6px 14px; font-size: 12.5px; background: transparent; }
+.seg .pill:hover { background: var(--elev); }
+.seg .pill.on { background: var(--accent); color: var(--accent-ink); }
+.tools { display: flex; align-items: center; gap: 8px; }
+.icon-btn { width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--surface2); color: var(--text); font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background .15s, transform .1s; }
+.icon-btn:hover { background: var(--elev); }
+.icon-btn:active { transform: scale(.94); }
+/* ---------- layout ---------- */
+.app { display: none; }
+.page { max-width: 1080px; margin: 0 auto; padding: 22px 20px 80px; }
+.section-label { display: flex; align-items: baseline; gap: 10px; margin: 26px 0 12px; }
+.section-label:first-child { margin-top: 4px; }
+.section-label h3 { font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
+.section-label .sub { font-size: 12px; color: var(--faint); font-weight: 500; }
+/* ---------- hero ---------- */
+.hero {
+  position: relative; overflow: hidden; border-radius: 16px;
+  background:
+    radial-gradient(700px 260px at 88% -40%, rgba(30,215,96,0.22), transparent 65%),
+    var(--surface);
+  box-shadow: var(--shadow-card); padding: 26px; display: grid;
+  grid-template-columns: minmax(240px, 1fr) 1.2fr; gap: 22px; align-items: center;
 }
-
-/* Sparkline tooltip */
-.spark-tooltip {
-  position: absolute;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  z-index: 100;
-  pointer-events: none;
-  white-space: nowrap;
-  transform: translate(-50%, -100%);
-  margin-top: -10px;
-  transition: opacity .15s;
-  opacity: 0;
+.hero-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 8px; }
+.hero-num { font-size: clamp(34px, 6vw, 46px); font-weight: 800; letter-spacing: -1px; line-height: 1.05; }
+.hero-num .cur { font-size: .55em; font-weight: 700; color: var(--muted); margin-right: 4px; }
+.delta { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 700; background: var(--surface2); color: var(--muted); }
+.delta.up { color: var(--green); } .delta.down { color: var(--red); }
+.hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--hairline); border-radius: 12px; overflow: hidden; }
+.hs-cell { background: var(--surface2); padding: 14px 12px; text-align: center; }
+.hs-cell .k { font-size: 11px; color: var(--faint); font-weight: 600; margin-bottom: 5px; }
+.hs-cell .v { font-size: 16.5px; font-weight: 800; letter-spacing: -.2px; }
+.hs-cell .v.neg { color: var(--red); }
+.cum-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.cum-strip .pill { cursor: default; font-weight: 600; letter-spacing: .2px; }
+.cum-strip .pill b { color: var(--text); }
+/* ---------- group / spark cards ---------- */
+.group { margin-bottom: 8px; }
+.group-head { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px 2px; user-select: none; }
+.group-head .g-ico { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; background: var(--surface2); }
+.group-head h4 { font-size: 15.5px; font-weight: 700; letter-spacing: -.2px; }
+.group-head .chev { margin-left: auto; color: var(--faint); font-size: 13px; transition: transform .2s; }
+.group.closed .chev { transform: rotate(-90deg); }
+.group.closed .cards { display: none; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 12px; margin-top: 6px; }
+.spark-card {
+  background: var(--surface); border-radius: 12px; padding: 14px 14px 10px;
+  box-shadow: var(--shadow-card); position: relative;
+  transition: background .15s, transform .15s;
 }
+.spark-card:hover { background: var(--elev); transform: translateY(-2px); }
+.spark-header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+.spark-title { font-size: 12.5px; font-weight: 600; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spark-current { font-size: 17px; font-weight: 800; letter-spacing: -.3px; white-space: nowrap; }
+.spark-current.up { color: var(--green); } .spark-current.down { color: var(--red); } .spark-current.flat { color: var(--muted); }
+.spark-delta { font-size: 11px; font-weight: 600; color: var(--faint); margin-bottom: 4px; }
+.sparkline { width: 100%; height: 56px; display: block; margin-top: 4px; }
+.spark-axis-labels { display: flex; justify-content: space-between; margin-top: 2px; font-size: 10px; color: var(--faint); font-weight: 600; }
+/* ---------- detail ---------- */
+.month-scroller { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; scrollbar-width: none; }
+.month-scroller::-webkit-scrollbar { display: none; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.detail-card { background: var(--surface); border-radius: 14px; padding: 18px; box-shadow: var(--shadow-card); }
+.detail-card-title { font-size: 14px; font-weight: 800; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--hairline); display: flex; align-items: center; gap: 8px; }
+.detail-card-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.detail-empty { font-size: 13px; color: var(--faint); padding: 10px 0; }
+.detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.detail-table th { text-align: left; color: var(--faint); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; padding: 0 6px 8px; }
+.detail-table td { padding: 9px 6px; border-bottom: 1px solid var(--hairline); }
+.detail-table tr:last-child td { border-bottom: none; }
+.detail-table td.name { color: var(--muted); }
+.detail-table td.val { text-align: right; font-weight: 700; }
+.detail-table td.val.neg { color: var(--red); }
+.detail-table tr.total-row td { font-weight: 800; color: var(--text); background: var(--surface2); }
+.detail-table tr.total-row td:first-child { border-radius: 8px 0 0 8px; }
+.detail-table tr.total-row td:last-child { border-radius: 0 8px 8px 0; }
+/* ---------- modal ---------- */
+#pwdModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.62); backdrop-filter: blur(6px); z-index: 99; align-items: center; justify-content: center; padding: 20px; }
+#pwdModal .login-box { padding: 30px 26px 24px; }
+#pwdModal .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+#pwdModal .modal-actions .login-btn { flex: 1; }
+#pwdModal .login-btn.cancel { background: var(--surface2); color: var(--muted); }
+#pmCode { letter-spacing: 2px; text-transform: uppercase; }
+.reveal-row { display: flex; align-items: center; gap: 7px; margin: 2px 0 4px; font-size: 12.5px; color: var(--muted); cursor: pointer; justify-content: center; }
+.reveal-row input { accent-color: var(--green); width: 15px; height: 15px; }
+/* ---------- tooltip / states ---------- */
+.spark-tooltip { position: absolute; background: var(--elev); border-radius: 10px; padding: 8px 14px; box-shadow: var(--shadow-pop); z-index: 100; pointer-events: none; white-space: nowrap; transform: translate(-50%,-100%); margin-top: -10px; transition: opacity .15s; opacity: 0; }
 .spark-tooltip.visible { opacity: 1; }
-.spark-tooltip .st-month { font-size: 11px; color: var(--text-secondary); margin-bottom: 2px; }
-.spark-tooltip .st-value { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.spark-tooltip .st-month { font-size: 10.5px; color: var(--faint); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.spark-tooltip .st-value { font-size: 16px; font-weight: 800; }
+.loading, .error-msg, .no-data { text-align: center; padding: 60px 20px; color: var(--faint); font-size: 14px; }
+.error-msg { color: var(--red); }
+.loading .spin { width: 26px; height: 26px; margin: 0 auto 14px; border-radius: 50%; border: 3px solid var(--surface2); border-top-color: var(--green); animation: sp .8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+/* ---------- responsive ---------- */
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .topbar-in { padding: 10px 14px; gap: 8px; }
+  .brand { margin-right: 0; width: 100%; }
+  .seg { width: 100%; justify-content: center; }
+  .tools { margin-left: auto; }
+  .page { padding: 16px 12px 70px; }
+  .hero { padding: 20px 16px; }
+  .hero-stats { grid-template-columns: 1fr 1fr; }
+  .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .spark-current { font-size: 15px; }
+}
+@media (max-width: 380px) { .cards { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
 <!-- Login Screen -->
-<div id="loginScreen" style="display:none">
+<div id="loginScreen">
   <div class="login-box">
-    <h2>🔒 工资统计</h2>
-    <p>私有数据，请输入密码查看</p>
+    <div class="login-logo">💵</div>
+    <h2>我的工资</h2>
+    <p>私有数据 · 请输入密码查看</p>
     <input type="password" class="login-input" id="pwdInput" placeholder="密码" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">进入</button>
+    <button class="login-btn" onclick="doLogin()">进 入</button>
     <div class="login-error" id="loginError"></div>
-    <p style="margin-top:10px;font-size:13px"><a href="javascript:void(0)" onclick="openPwdModal('recover')" style="color:var(--text-secondary)">忘记密码？用恢复码重置</a></p>
+    <p class="login-forgot"><a href="javascript:void(0)" onclick="openPwdModal('recover')">忘记密码？用恢复码重置</a></p>
   </div>
 </div>
 
 <!-- Password Modal (输入全程遮蔽, 可勾选显示) -->
-<div id="pwdModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99;align-items:center;justify-content:center">
-  <div class="login-box" style="max-width:340px;width:90%">
-    <h2 id="pmTitle" style="font-size:18px">改密码</h2>
+<div id="pwdModal">
+  <div class="login-box" style="max-width:360px">
+    <h2 id="pmTitle" style="font-size:19px">改密码</h2>
+    <p style="margin-bottom:16px" id="pmHint">设置新的访问密码</p>
+    <input type="text" class="login-input" id="pmCode" placeholder="恢复码 XXXX-XXXX-XXXX" autocomplete="off" style="display:none;letter-spacing:2px;text-transform:uppercase">
     <input type="password" class="login-input" id="pmP1" placeholder="新密码（至少6位）" autocomplete="new-password">
-    <input type="password" class="login-input" id="pmP2" placeholder="再输一次确认" autocomplete="new-password" style="margin-top:8px">
-    <input type="text" class="login-input" id="pmCode" placeholder="恢复码 XXXX-XXXX-XXXX" autocomplete="off" style="display:none;margin-top:8px">
-    <label style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;color:var(--text-secondary);cursor:pointer">
-      <input type="checkbox" id="pmReveal" onchange="pmToggleReveal()">显示输入
-    </label>
-    <div class="login-error" id="pmErr" style="min-height:18px;margin-top:6px"></div>
-    <button class="login-btn" id="pmOk" style="margin-top:4px">确认</button>
-    <button class="login-btn" id="pmCancel" style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text)">取消</button>
+    <input type="password" class="login-input" id="pmP2" placeholder="再输一次确认" autocomplete="new-password">
+    <label class="reveal-row"><input type="checkbox" id="pmReveal" onchange="pmToggleReveal()">显示输入内容</label>
+    <div class="login-error" id="pmErr" style="min-height:18px"></div>
+    <div class="modal-actions">
+      <button class="login-btn" id="pmOk">确认</button>
+      <button class="login-btn cancel" id="pmCancel">取消</button>
+    </div>
   </div>
 </div>
 
 <!-- Main App -->
-<div class="container" id="mainApp" style="display:none">
-  <header>
-    <h1>💵 我的工资</h1>
-    <div class="header-right">
-      <button class="logout-btn" onclick="doLogout()">退出</button>
-      <button class="logout-btn" onclick="openPwdModal('change')">改密码</button>
-      <div class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</div>
+<div class="app" id="mainApp">
+  <div class="topbar">
+    <div class="topbar-in">
+      <div class="brand"><span class="brand-dot">💵</span>我的工资</div>
+      <div class="seg" id="tabs">
+        <button class="pill tab on" data-tab="dashboard">总览</button>
+        <button class="pill tab" data-tab="detail">明细</button>
+      </div>
+      <div class="seg" id="rangeSeg">
+        <button class="pill rng on" data-r="3">近3月</button>
+        <button class="pill rng" data-r="6">近6月</button>
+        <button class="pill rng" data-r="0">全部</button>
+      </div>
+      <div class="tools">
+        <button class="pill ghost" onclick="openPwdModal('change')" style="height:38px">改密码</button>
+        <button class="icon-btn" onclick="doLogout()" title="退出">⏻</button>
+        <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题">☀️</button>
+      </div>
     </div>
-  </header>
-
-  <div class="tabs" id="tabs">
-    <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
-    <div class="tab" data-tab="detail">📋 明细</div>
   </div>
-
-  <div id="app">
-    <div class="loading">加载中…</div>
-  </div>
+  <div class="page"><main id="app"></main></div>
 </div>
 
 <script>
@@ -417,7 +279,10 @@ const AUTH_KEY = 'salary-session';  // 存的是服务端签发的会话票, 非
 let allData = [];
 let periods = [];
 let currentTab = 'dashboard';
+let rangeMonths = 3;         // 时间范围筛选: 3/6/0=全部
 let dataLoaded = false;
+let collapsedGroups = {};    // 分组折叠状态
+let SID = 0;                 // svg gradient id 计数器
 
 // ===== Auth =====
 function getSession() {
@@ -439,7 +304,7 @@ async function doLogin() {
     const d = await res.json();
     try { localStorage.setItem(AUTH_KEY, d.token); } catch(e) {}
     err.textContent = '';
-    dataLoaded = false;  // 换票后重拉
+    dataLoaded = false;
     showApp();
   } catch (e) { err.textContent = '网络错误: ' + e.message; }
 }
@@ -454,12 +319,12 @@ let pmMode = 'change';
 function openPwdModal(mode) {
   pmMode = mode;
   document.getElementById('pmTitle').textContent = mode === 'recover' ? '用恢复码重置密码' : '改密码';
+  document.getElementById('pmHint').textContent = mode === 'recover' ? '输入恢复码，设置新密码' : '设置新的访问密码（至少6位）';
   document.getElementById('pmCode').style.display = mode === 'recover' ? 'block' : 'none';
-  document.getElementById('pmP1').placeholder = mode === 'recover' ? '新密码（至少6位）' : '新密码（至少6位）';
   document.getElementById('pmErr').textContent = '';
   document.getElementById('pmP1').value = ''; document.getElementById('pmP2').value = ''; document.getElementById('pmCode').value = '';
   document.getElementById('pmReveal').checked = false; pmToggleReveal();
-  const m = document.getElementById('pwdModal'); m.style.display = 'flex';
+  document.getElementById('pwdModal').style.display = 'flex';
   document.getElementById(mode === 'recover' ? 'pmCode' : 'pmP1').focus();
 }
 function closePwdModal() { document.getElementById('pwdModal').style.display = 'none'; }
@@ -483,12 +348,14 @@ async function pmSubmit() {
     if (res.status === 401) { err.textContent = pmMode === 'recover' ? '恢复码不正确' : '会话已过期，请重新登录'; return; }
     if (!res.ok || d.status !== 'OK') { err.textContent = '失败：' + (d.msg || res.status); return; }
     if (d.new_recovery_code) {
+      closePwdModal();
+      showLogin();
+      document.getElementById('loginError').textContent = '密码已重置，请用新密码登录';
       alert('已重置！请把新恢复码抄好（只显示这一次）：\n\n' + d.new_recovery_code);
-      if (pmMode === 'recover') { closePwdModal(); showLogin(); document.getElementById('loginError').textContent = '密码已重置，请用新密码登录'; }
     } else {
       alert('密码已更新。本次仍保持登录，下次请用新密码进入。');
+      closePwdModal();
     }
-    closePwdModal();
   } catch (e) { err.textContent = '网络错误：' + e.message; }
 }
 document.addEventListener('DOMContentLoaded', () => {
@@ -528,10 +395,11 @@ async function fetchData() {
 }
 
 async function loadData() {
+  document.getElementById('app').innerHTML = '<div class="loading"><div class="spin"></div>读取数据中…</div>';
   try {
     allData = await fetchData();
     if (!Array.isArray(allData) || allData.length === 0) {
-      document.getElementById('app').innerHTML = '<div class="error-msg">未获取到工资数据</div>';
+      document.getElementById('app').innerHTML = '<div class="no-data">暂无数据</div>';
       return;
     }
     periods = [...new Set(allData.map(d => d.period))].sort();
@@ -547,297 +415,202 @@ function fmt(n) {
   const v = Math.abs(n);
   return (n < 0 ? '-' : '') + v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-
 function fmtShort(n) {
   const v = Math.abs(n);
   if (v >= 10000) return (n < 0 ? '-' : '') + (v / 10000).toFixed(1) + '万';
   return fmt(n);
 }
-
 function fmtInt(n) {
   const v = Math.round(n);
   return (n < 0 ? '-' : '') + Math.abs(v).toLocaleString('zh-CN');
 }
+function periodLabel(p) { return p.slice(2, 4) + '/' + p.slice(4, 6); }
 
-function periodLabel(p) {
-  return p.slice(2, 4) + '/' + p.slice(4, 6);
+// 当前时间窗口内的月份(受 range 筛选)
+function windowPeriods() {
+  if (!rangeMonths || rangeMonths >= periods.length) return periods.slice();
+  return periods.slice(-rangeMonths);
 }
 
-// Get item value for a specific period by matching item_name substring
 function getItemValue(period, nameMatch, categoryMatch) {
   const clean = s => s.replace(/\s+/g, '');
   const name = clean(nameMatch);
-  // 先精确匹配
   const item = allData.find(d =>
     d.period === period &&
     (categoryMatch ? clean(d.category).includes(clean(categoryMatch)) : true) &&
-    clean(d.item_name) === name
-  );
+    clean(d.item_name) === name);
   if (item) return item.item_value;
-  // 后缀匹配（如"工资税"匹配以"工资税"结尾的名称，但限制长度差不超过3）
   const item2 = allData.find(d =>
     d.period === period &&
     (categoryMatch ? clean(d.category).includes(clean(categoryMatch)) : true) &&
-    clean(d.item_name).endsWith(name) && clean(d.item_name).length <= name.length + 3
-  );
+    clean(d.item_name).endsWith(name) && clean(d.item_name).length <= name.length + 3);
   if (item2) return item2.item_value;
-  // 前缀匹配（如"总计"匹配以"总计"开头的名称）
   const item3 = allData.find(d =>
     d.period === period &&
     (categoryMatch ? clean(d.category).includes(clean(categoryMatch)) : true) &&
-    clean(d.item_name).startsWith(name)
-  );
+    clean(d.item_name).startsWith(name));
   return item3 ? item3.item_value : 0;
 }
-
-function getNetPay(period) {
-  return getItemValue(period, '税后实发', '税后');
-}
-
-function getGrossTotal(period) {
-  return getItemValue(period, '总计', '税前收入');
-}
-
-function getTax(period) {
-  return getItemValue(period, '工资税', '个人所得税');
-}
-
-function getDeductionTotal(period) {
-  return Math.abs(getItemValue(period, '总计', '税前工资扣除'));
-}
-
-// Get values for recent N periods for a given item
+function getNetPay(period)     { return getItemValue(period, '税后实发', '税后'); }
+function getGrossTotal(period) { return getItemValue(period, '总计', '税前收入'); }
+function getTax(period)        { return getItemValue(period, '工资税', '个人所得税'); }
+function getDeductionTotal(period) { return Math.abs(getItemValue(period, '总计', '税前工资扣除')); }
 function getSeries(nameMatch, categoryMatch, count) {
-  const recent = periods.slice(-count);
+  const recent = windowPeriods().slice(-count);
   return recent.map(p => getItemValue(p, nameMatch, categoryMatch));
 }
 
-// ===== Sparkline SVG =====
+// ===== Sparkline SVG (平滑曲线 + 渐变面积) =====
+function smoothPath(pts) {
+  if (pts.length < 2) return '';
+  let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
 function buildSparkline(values, isUp, months) {
-  // values: array of numbers (4 months)
   const count = values.length;
   if (count < 2) return '<div class="sparkline"></div>';
-
-  const w = 200;
-  const h = 60;
-  const padX = 10;
-  const padY = 8;
-  const usableW = w - padX * 2;
-  const usableH = h - padY * 2;
-
-  const minVal = Math.min(...values);
-  const maxVal = Math.max(...values);
-  const range = maxVal - minVal || 1;
-  
-  // 对负数项目（扣除项），反转 Y 轴：绝对值越大（交得越多）线越往上
+  const w = 200, h = 56, padX = 10, padY = 7;
+  const usableW = w - padX * 2, usableH = h - padY * 2;
   const isNegative = values.some(v => v < 0);
-  const points = values.map((v, i) => {
+  const pts = values.map((v, i) => {
     const x = padX + (usableW * i) / (count - 1);
     let y;
     if (isNegative) {
-      // 负数：绝对值越大 = 交得越多 = 线往上
-      const absV = Math.abs(v);
-      const absMin = Math.min(...values.map(Math.abs));
-      const absMax = Math.max(...values.map(Math.abs));
-      const absRange = absMax - absMin || 1;
-      y = padY + usableH - ((absV - absMin) / absRange) * usableH;
+      const av = Math.abs(v), aMin = Math.min(...values.map(Math.abs)), aMax = Math.max(...values.map(Math.abs)), aR = aMax - aMin || 1;
+      y = padY + usableH - ((av - aMin) / aR) * usableH;
     } else {
-      y = padY + usableH - ((v - minVal) / range) * usableH;
+      const min = Math.min(...values), max = Math.max(...values), r = max - min || 1;
+      y = padY + usableH - ((v - min) / r) * usableH;
     }
-    return { x, y, v, month: months ? months[i] : '', idx: i };
+    return { x, y, v, month: months ? months[i] : '' };
   });
-
-  const color = isUp === true ? 'var(--green)' : isUp === false ? 'var(--red)' : 'var(--text-secondary)';
-
-  const polylinePoints = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-  const circles = points.map((p, i) => {
-    const isLast = i === points.length - 1;
-    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isLast ? 4 : 2.5}" fill="${color}" ${isLast ? `stroke="var(--card-bg)" stroke-width="1.5"` : ''}/>`;
+  const color = isUp === true ? 'var(--green)' : isUp === false ? 'var(--red)' : 'var(--faint)';
+  const solid = isUp === true ? '#1ed760' : isUp === false ? '#f3727f' : '#7c7c7c';
+  const gradId = 'sg' + (++SID);
+  const line = smoothPath(pts);
+  const area = `${line} L${pts[pts.length-1].x.toFixed(1)},${h - padY} L${pts[0].x.toFixed(1)},${h - padY} Z`;
+  const circles = pts.map((p, i) => {
+    const last = i === pts.length - 1;
+    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${last ? 3.6 : 2.2}" fill="${solid}" ${last ? `stroke="var(--surface)" stroke-width="2"` : ''}/>`;
   }).join('');
-
-  // Transparent hit areas for interaction
-  const hitAreas = points.map(p => {
-    const valStr = p.v < 0
-      ? '-¥' + Math.abs(p.v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      : '¥' + p.v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return `<circle class="spark-hit" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="15" fill="transparent" style="cursor:pointer" data-month="${p.month}" data-value="${valStr}"/>`;
+  const hits = pts.map(p => {
+    const valStr = p.v < 0 ? '-¥' + fmt(Math.abs(p.v)) : '¥' + fmt(p.v);
+    return `<circle class="spark-hit" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="14" fill="transparent" style="cursor:pointer" data-month="${p.month}" data-value="${valStr}"/>`;
   }).join('');
-
-  // Area under line (subtle fill)
-  const areaPath = `M${points[0].x.toFixed(1)},${(h - padY).toFixed(1)} ` +
-    points.map(p => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') +
-    ` L${points[points.length-1].x.toFixed(1)},${(h - padY).toFixed(1)} Z`;
-
   return `<svg viewBox="0 0 ${w} ${h}" class="sparkline" preserveAspectRatio="none">
-    <path d="${areaPath}" fill="${color}" opacity="0.08"/>
-    <polyline points="${polylinePoints}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    ${circles}
-    ${hitAreas}
+    <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${solid}" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="${solid}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${area}" fill="url(#${gradId})"/>
+    <path d="${line}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${circles}${hits}
   </svg>`;
 }
 
-function buildSparkCard(title, values, opts = {}) {
-  const recent = periods.slice(-values.length);
-  const months = recent.map(p => p); // full period string e.g. "202604"
-  const current = values[values.length - 1];
-  const first = values[0];
+function trendOf(values) {
+  const current = values[values.length - 1], first = values[0];
   const diff = current - first;
-  let trendClass, trendText;
-  if (Math.abs(diff) < 0.01) { trendClass = 'flat'; isUp = null; }
-  else if (first < 0) {
-    // 负数项目（扣除项）：绝对值变大 = 多交了 = 涨 = 绿色
-    isUp = Math.abs(current) > Math.abs(first);
-    trendClass = isUp ? 'up' : 'down';
-  }
-  else if (diff > 0) { trendClass = 'up'; isUp = true; }
-  else { trendClass = 'down'; isUp = false; }
+  let isUp, trendClass;
+  if (Math.abs(diff) < 0.01) { isUp = null; trendClass = 'flat'; }
+  else if (first < 0) { isUp = Math.abs(current) > Math.abs(first); trendClass = isUp ? 'up' : 'down'; }
+  else if (diff > 0) { isUp = true; trendClass = 'up'; }
+  else { isUp = false; trendClass = 'down'; }
+  return { current, first, diff, isUp, trendClass };
+}
 
-  const isNegative = current < 0;
-  const displayValue = (isNegative ? '-' : '') + fmtShort(current);
-  const trendArrow = isUp === true ? '↑' : isUp === false ? '↓' : '→';
-
-  const axisLabels = recent.map(p => `<span>${periodLabel(p)}</span>`).join('');
-
+function buildSparkCard(title, values) {
+  const recent = windowPeriods().slice(-values.length);
+  const { current, diff, isUp, trendClass } = trendOf(values);
+  const displayValue = fmtShort(Math.abs(current)) + (current < 0 ? '' : '');
+  const arrow = isUp === true ? '↑' : isUp === false ? '↓' : '→';
+  const dSign = diff >= 0 ? '+' : '-';
+  const dTxt = `区间变化 ${dSign}¥${fmtShort(Math.abs(diff)).replace('万','万')}`;
+  const axis = recent.map(p => `<span>${periodLabel(p)}</span>`).join('');
   return `<div class="spark-card">
     <div class="spark-header">
       <span class="spark-title">${title}</span>
-      <span class="spark-current ${trendClass}">${displayValue} ${trendArrow}</span>
+      <span class="spark-current ${trendClass}">${current < 0 ? '-' : ''}${displayValue} ${arrow}</span>
     </div>
-    ${buildSparkline(values, isUp, months)}
-    <div class="spark-axis-labels">${axisLabels}</div>
+    <div class="spark-delta">${dTxt}</div>
+    ${buildSparkline(values, isUp, recent)}
+    <div class="spark-axis-labels">${axis}</div>
   </div>`;
 }
 
 // ===== Dashboard =====
+const GROUPS = [
+  { id: 'gross',  icon: '💰', name: '税前收入',   items: [['基本工资','基本工资','税前收入'],['月综合津贴','月综合津贴','税前收入'],['交通津贴','交通津贴','税前收入'],['节日津贴','节日津贴','税前收入'],['特别奖金','特别奖金','税前收入'],['总计税前','总计','税前收入']] },
+  { id: 'ins',    icon: '🛡️', name: '五险一金',   items: [['养老保险','养老','税前工资扣除'],['失业保险','失业','税前工资扣除'],['医疗保险','医疗','税前工资扣除'],['住房公积金','住房公积金','税前工资扣除'],['总计扣除','总计','税前工资扣除']] },
+  { id: 'tax',    icon: '📋', name: '个税',       items: [['工资税','工资税','个人所得税']] },
+  { id: 'net',    icon: '✅', name: '到手',       items: [['实发工资','税后实发','税后']] },
+  { id: 'param',  icon: '📐', name: '参数',       items: [['自动缺勤每日扣款','自动缺勤每日扣款金额','参数'],['基本工资/天','基本工资/天','参数'],['津贴/天','津贴/天','参数'],['加班费/每小时','加班费/每小时','参数'],['公积金基数','公积金基数','参数'],['社会保险基数','社会保险基数','参数']] },
+];
+
 function renderDashboard() {
+  const win = windowPeriods();
   const latest = periods[periods.length - 1];
-  const prev = periods.length > 1 ? periods[periods.length - 2] : null;
+  const prev = win.length > 1 ? win[win.length - 2] : (periods.length > 1 ? periods[periods.length - 2] : null);
 
-  const net = getNetPay(latest);
-  const gross = getGrossTotal(latest);
-  const tax = getTax(latest);
-  const deduction = getDeductionTotal(latest);
-
+  const net = getNetPay(latest), gross = getGrossTotal(latest), tax = getTax(latest), ded = getDeductionTotal(latest);
   const prevNet = prev ? getNetPay(prev) : 0;
-  const prevGross = prev ? getGrossTotal(prev) : 0;
-  const prevTax = prev ? getTax(prev) : 0;
-  const prevDed = prev ? getDeductionTotal(prev) : 0;
+  const netDiff = net - prevNet;
 
-  function changeHtml(cur, pre, suffix) {
-    if (!prev) return '';
-    const d = cur - pre;
-    // 负数项目：绝对值变大 = 涨 = 绿色
-    let cls;
-    if (pre < 0) {
-      cls = Math.abs(cur) >= Math.abs(pre) ? 'up' : 'down';
-    } else {
-      cls = d >= 0 ? 'up' : 'down';
-    }
-    const sign = d >= 0 ? '+' : '';
-    return `<div class="s-change ${cls}">${sign}${fmt(Math.abs(d))} ${suffix||''}</div>`;
-  }
-
-  // Tax rate line
   const taxRate = gross > 0 ? (tax / gross) * 100 : 0;
   const netRatio = gross > 0 ? (net / gross) * 100 : 0;
 
-  // 累计统计
-  const totalGross = periods.reduce((s, p) => s + getGrossTotal(p), 0);
-  const totalNet = periods.reduce((s, p) => s + getNetPay(p), 0);
-  const totalTax = periods.reduce((s, p) => s + getTax(p), 0);
-  const totalDed = periods.reduce((s, p) => s + getDeductionTotal(p), 0);
-  const avgNet = periods.length > 0 ? totalNet / periods.length : 0;
+  const totalGross = win.reduce((s, p) => s + getGrossTotal(p), 0);
+  const totalNet = win.reduce((s, p) => s + getNetPay(p), 0);
+  const avgNet = win.length ? totalNet / win.length : 0;
+  const winLabel = win.length === periods.length ? '全部' : win.length + '个月';
 
-  // Build sparkline card groups
-  // Group 1: 税前收入
-  const grossCards = [
-    buildSparkCard('基本工资', getSeries('基本工资', '税前收入', 4)),
-    buildSparkCard('月综合津贴', getSeries('月综合津贴', '税前收入', 4)),
-    buildSparkCard('交通津贴', getSeries('交通津贴', '税前收入', 4)),
-    buildSparkCard('节日津贴', getSeries('节日津贴', '税前收入', 4)),
-    buildSparkCard('特别奖金', getSeries('特别奖金', '税前收入', 4)),
-    buildSparkCard('总计税前收入', getSeries('总计', '税前收入', 4)),
-  ].join('');
+  const dCls = Math.abs(netDiff) < 0.01 ? '' : netDiff > 0 ? 'up' : 'down';
+  const dArrow = Math.abs(netDiff) < 0.01 ? '→' : netDiff > 0 ? '▲' : '▼';
+  const dTxt = prev ? `${dArrow} ${netDiff >= 0 ? '+' : '-'}¥${fmt(Math.abs(netDiff))} vs ${periodLabel(prev)}` : '';
 
-  // Group 2: 五险一金 (values are negative, show trend by absolute or keep negative)
-  const insCards = [
-    buildSparkCard('养老保险', getSeries('养老', '税前工资扣除', 4)),
-    buildSparkCard('失业保险', getSeries('失业', '税前工资扣除', 4)),
-    buildSparkCard('医疗保险', getSeries('医疗', '税前工资扣除', 4)),
-    buildSparkCard('住房公积金', getSeries('住房公积金', '税前工资扣除', 4)),
-    buildSparkCard('总计扣除', getSeries('总计', '税前工资扣除', 4)),
-  ].join('');
-
-  // Group 3: 个税
-  const taxCards = buildSparkCard('工资税', getSeries('工资税', '个人所得税', 4));
-
-  // Group 4: 到手
-  const netCards = buildSparkCard('实发工资', getSeries('税后实发', '税后', 4));
-
-  // Group 5: 参数
-  const paramCards = [
-    buildSparkCard('自动缺勤每日扣款', getSeries('自动缺勤每日扣款金额', '参数', 4)),
-    buildSparkCard('基本工资/天', getSeries('基本工资/天', '参数', 4)),
-    buildSparkCard('津贴/天', getSeries('津贴/天', '参数', 4)),
-    buildSparkCard('加班费/每小时', getSeries('加班费/每小时', '参数', 4)),
-    buildSparkCard('公积金基数', getSeries('公积金基数', '参数', 4)),
-    buildSparkCard('社会保险基数', getSeries('社会保险基数', '参数', 4)),
-  ].join('');
-
-  return `
-    <!-- Summary cards -->
-    <div class="summary-grid">
-      <div class="summary-card primary">
-        <div class="s-label">当月实发工资（${periodLabel(latest)}）</div>
-        <div class="s-value">${fmt(net)}</div>
-        ${changeHtml(net, prevNet, '元')}
-      </div>
-      <div class="summary-card">
-        <div class="s-label">税前收入</div>
-        <div class="s-value">${fmt(gross)}</div>
-        ${changeHtml(gross, prevGross, '元')}
-      </div>
-      <div class="summary-card">
-        <div class="s-label">当月交税</div>
-        <div class="s-value" style="color:var(--red)">${fmt(tax)}</div>
-        ${changeHtml(tax, prevTax, '元')}
-      </div>
-      <div class="summary-card" style="grid-column:span 2">
-        <div class="s-label">当月五险一金</div>
-        <div class="s-value">-${fmt(deduction)}</div>
-        ${changeHtml(-deduction, -prevDed, '元')}
-        <div class="tax-rate-line">
-          税率 <span>${taxRate.toFixed(1)}%</span> | 到手比例 <span>${netRatio.toFixed(1)}%</span>
+  const groupsHtml = GROUPS.map(g => {
+    const closed = collapsedGroups[g.id] ? 'closed' : '';
+    const cards = g.items.map(([label, match, cat]) => buildSparkCard(label, getSeries(match, cat, win.length))).join('');
+    return `<div class="group ${closed}" data-g="${g.id}">
+      <div class="section-label">
+        <div class="group-head" data-head="${g.id}" style="width:100%">
+          <span class="g-ico">${g.icon}</span><h4>${g.name}</h4>
+          <span class="chip">${g.items.length} 项</span>
+          <span class="chev">▾</span>
         </div>
       </div>
-    </div>
-    <div class="summary-row" style="grid-column:1/-1;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px">
-      <div class="summary-item" style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
-        <div class="summary-label">${periods.length}个月累计税前</div>
-        <div class="summary-num" style="font-size:22px;font-weight:800;color:var(--accent)">¥${fmt(totalGross)}</div>
+      <div class="cards">${cards}</div>
+    </div>`;
+  }).join('');
+
+  return `
+    <section class="hero">
+      <div>
+        <div class="hero-label">当月实发 · ${periodLabel(latest)}</div>
+        <div class="hero-num"><span class="cur">¥</span>${fmt(net)}</div>
+        <div class="delta ${dCls}">${dTxt}</div>
       </div>
-      <div class="summary-item" style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
-        <div class="summary-label">${periods.length}个月累计到手</div>
-        <div class="summary-num" style="font-size:22px;font-weight:800;color:var(--green)">¥${fmt(totalNet)}</div>
-        <div style="font-size:12px;color:var(--text-secondary)">月均 ¥${fmt(avgNet)}</div>
+      <div class="hero-stats">
+        <div class="hs-cell"><div class="k">税前收入</div><div class="v">${fmtInt(gross)}</div></div>
+        <div class="hs-cell"><div class="k">个税</div><div class="v neg">${fmtInt(tax)}</div></div>
+        <div class="hs-cell"><div class="k">五险一金</div><div class="v neg">-${fmtInt(ded)}</div></div>
+        <div class="hs-cell"><div class="k">到手率</div><div class="v" style="color:var(--green)">${netRatio.toFixed(1)}%</div></div>
       </div>
+    </section>
+    <div class="cum-strip">
+      <span class="pill">${winLabel}累计税前 <b>¥${fmtInt(totalGross)}</b></span>
+      <span class="pill">${winLabel}累计到手 <b>¥${fmtInt(totalNet)}</b></span>
+      <span class="pill">月均到手 <b>¥${fmtInt(avgNet)}</b></span>
+      <span class="pill">税率 <b>${taxRate.toFixed(1)}%</b></span>
     </div>
-
-    <!-- Sparkline groups -->
-    <div class="group-title">💰 税前收入</div>
-    <div class="spark-grid">${grossCards}</div>
-
-    <div class="group-title">➖ 五险一金</div>
-    <div class="spark-grid">${insCards}</div>
-
-    <div class="group-title">📋 个税</div>
-    <div class="spark-grid">${taxCards}</div>
-
-    <div class="group-title">✅ 到手</div>
-    <div class="spark-grid">${netCards}</div>
-
-    <div class="group-title">📐 参数</div>
-    <div class="spark-grid">${paramCards}</div>
+    ${groupsHtml}
   `;
 }
 
@@ -845,68 +618,42 @@ function renderDashboard() {
 let selectedMonth = null;
 
 function renderDetail() {
-  if (!selectedMonth) selectedMonth = periods[periods.length - 1];
-
-  const options = periods.map(p => `<option value="${p}" ${p === selectedMonth ? 'selected' : ''}>${periodLabel(p)}</option>`).join('');
+  const win0 = windowPeriods();
+  if (!selectedMonth || !win0.includes(selectedMonth)) selectedMonth = win0[win0.length - 1];
+  const win = win0;
+  const monthPills = win.map(p =>
+    `<button class="pill ${p === selectedMonth ? 'on' : ''}" style="flex-shrink:0" onclick="selectMonth('${p}')">${periodLabel(p)}</button>`).join('');
 
   const monthData = allData.filter(d => d.period === selectedMonth);
-  const categoryOrder = [
-    '1.税前收入',
-    '2.税前工资扣除',
-    '3.个人所得税扣减',
-    '4.税后应发和扣除',
-    '5.税后应发',
-    '6.参数'
-  ];
+  const categoryOrder = ['1.税前收入','2.税前工资扣除','3.个人所得税扣减','4.税后应发和扣除','5.税后应发','6.参数'];
 
-  const groups = categoryOrder.map(cat => {
-    const items = monthData.filter(d => d.category.replace(/\s+/g, '') === cat.replace(/\s+/g, ''));
+  const cards = categoryOrder.map(cat => {
+    const items = monthData.filter(d => d.category.replace(/\s+/g,'') === cat.replace(/\s+/g,''));
     if (items.length === 0) {
-      return `<div class="detail-card">
-        <div class="detail-card-title">${cat}</div>
-        <div class="detail-empty">本月无此项</div>
-      </div>`;
+      return `<div class="detail-card"><div class="detail-card-title"><span class="dot"></span>${cat}</div><div class="detail-empty">本月无此项</div></div>`;
     }
     const rows = items.map(item => {
       const v = item.item_value;
-      let valClass = '';
-      if (v < 0) valClass = 'neg';
       const isTotal = item.item_name.includes('总计') || item.item_name.includes('合计');
-      return `<tr class="${isTotal ? 'total-row' : ''}">
-        <td class="name">${item.item_name}</td>
-        <td class="val ${valClass}">${fmt(v)}</td>
-      </tr>`;
+      return `<tr class="${isTotal ? 'total-row' : ''}"><td class="name">${item.item_name}</td><td class="val ${v < 0 ? 'neg' : ''}">${fmt(v)}</td></tr>`;
     }).join('');
     return `<div class="detail-card">
-      <div class="detail-card-title">${cat}</div>
-      <table class="detail-table">
-        <thead><tr><th>项目</th><th style="text-align:right">金额（元）</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <div class="detail-card-title"><span class="dot"></span>${cat}<span class="chip" style="margin-left:auto">${items.length}</span></div>
+      <table class="detail-table"><thead><tr><th>项目</th><th style="text-align:right">金额（元）</th></tr></thead><tbody>${rows}</tbody></table>
     </div>`;
   }).join('');
 
   return `
-    <div class="card">
-      <div class="select-row">
-        <select onchange="selectMonth(this.value)">
-          ${options}
-        </select>
-      </div>
-    </div>
-    ${groups}
+    <div class="month-scroller">${monthPills}</div>
+    <div class="detail-grid">${cards}</div>
   `;
 }
 
-function selectMonth(m) {
-  selectedMonth = m;
-  render();
-}
+function selectMonth(m) { selectedMonth = m; render(); }
+function toggleGroup(id) { collapsedGroups[id] = !collapsedGroups[id]; render(); }
 
 // ===== Sparkline tooltip =====
-let sparkTooltipEl = null;
-let sparkTooltipTimer = null;
-
+let sparkTooltipEl = null, sparkTooltipTimer = null;
 function ensureSparkTooltip() {
   if (sparkTooltipEl) return sparkTooltipEl;
   sparkTooltipEl = document.createElement('div');
@@ -915,73 +662,39 @@ function ensureSparkTooltip() {
   document.body.appendChild(sparkTooltipEl);
   return sparkTooltipEl;
 }
-
 function showSparkTooltip(hitArea, cardEl) {
   const tt = ensureSparkTooltip();
-  const month = hitArea.dataset.month;
-  const value = hitArea.dataset.value;
-  tt.querySelector('.st-month').textContent = month ? periodLabel(month) : '';
-  tt.querySelector('.st-value').textContent = value;
-
-  // Position relative to the spark-card
+  tt.querySelector('.st-month').textContent = hitArea.dataset.month ? periodLabel(hitArea.dataset.month) : '';
+  tt.querySelector('.st-value').textContent = hitArea.dataset.value;
   const cardRect = cardEl.getBoundingClientRect();
   const hitRect = hitArea.getBoundingClientRect();
-  const x = hitRect.left + hitRect.width / 2;
-  const y = hitRect.top;
-
-  let left = x;
-  let top = y + window.scrollY - 10; // above the point, in document coords
-
+  let left = hitRect.left + hitRect.width / 2;
   tt.style.left = left + 'px';
-  tt.style.top = top + 'px';
+  tt.style.top = hitRect.top + window.scrollY - 10 + 'px';
   tt.classList.add('visible');
-
-  // Clamp within card horizontal bounds
   requestAnimationFrame(() => {
-    const ttRect = tt.getBoundingClientRect();
-    const halfW = ttRect.width / 2;
+    const ttRect = tt.getBoundingClientRect(), halfW = ttRect.width / 2;
     if (left - halfW < cardRect.left) left = cardRect.left + halfW;
     if (left + halfW > cardRect.right) left = cardRect.right - halfW;
     tt.style.left = left + 'px';
   });
 }
-
-function hideSparkTooltip() {
-  if (sparkTooltipEl) sparkTooltipEl.classList.remove('visible');
-}
-
+function hideSparkTooltip() { if (sparkTooltipEl) sparkTooltipEl.classList.remove('visible'); }
 function attachSparkInteractions() {
-  const hitAreas = document.querySelectorAll('.spark-hit');
-  hitAreas.forEach(ha => {
+  document.querySelectorAll('.spark-hit').forEach(ha => {
     const card = ha.closest('.spark-card');
     if (!card) return;
-
-    ha.addEventListener('mouseenter', () => {
-      clearTimeout(sparkTooltipTimer);
-      showSparkTooltip(ha, card);
-    });
-    ha.addEventListener('mouseleave', () => {
-      sparkTooltipTimer = setTimeout(hideSparkTooltip, 200);
-    });
-    ha.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showSparkTooltip(ha, card);
-    });
-    ha.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      showSparkTooltip(ha, card);
-    }, { passive: false });
+    ha.addEventListener('mouseenter', () => { clearTimeout(sparkTooltipTimer); showSparkTooltip(ha, card); });
+    ha.addEventListener('mouseleave', () => { sparkTooltipTimer = setTimeout(hideSparkTooltip, 200); });
+    ha.addEventListener('click', (e) => { e.stopPropagation(); showSparkTooltip(ha, card); });
+    ha.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); showSparkTooltip(ha, card); }, { passive: false });
   });
-
-  // Click outside to close
+  document.querySelectorAll('.group-head').forEach(h => {
+    h.addEventListener('click', () => toggleGroup(h.dataset.head));
+  });
   if (!attachSparkInteractions._bound) {
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.spark-hit')) hideSparkTooltip();
-    });
-    document.addEventListener('touchstart', (e) => {
-      if (!e.target.closest('.spark-hit')) hideSparkTooltip();
-    }, { passive: true });
+    document.addEventListener('click', (e) => { if (!e.target.closest('.spark-hit')) hideSparkTooltip(); });
+    document.addEventListener('touchstart', (e) => { if (!e.target.closest('.spark-hit')) hideSparkTooltip(); }, { passive: true });
     attachSparkInteractions._bound = true;
   }
 }
@@ -989,60 +702,50 @@ function attachSparkInteractions() {
 // ===== Main render =====
 function render() {
   const app = document.getElementById('app');
-  if (allData.length === 0) {
-    app.innerHTML = '<div class="loading">加载中…</div>';
-    return;
-  }
-  let html = '';
-  switch (currentTab) {
-    case 'dashboard': html = renderDashboard(); break;
-    case 'detail': html = renderDetail(); break;
-  }
-  app.innerHTML = html;
-  // Attach sparkline interactions after DOM is built
+  if (allData.length === 0) { app.innerHTML = '<div class="loading"><div class="spin"></div></div>'; return; }
+  app.innerHTML = currentTab === 'dashboard' ? renderDashboard() : renderDetail();
   if (currentTab === 'dashboard') attachSparkInteractions();
 }
 
-// ===== Tab switching =====
+// ===== Tab & range =====
 document.getElementById('tabs').addEventListener('click', (e) => {
   const tab = e.target.closest('.tab');
   if (!tab) return;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  tab.classList.add('active');
+  document.querySelectorAll('#tabs .tab').forEach(t => t.classList.remove('on'));
+  tab.classList.add('on');
   currentTab = tab.dataset.tab;
   render();
   window.scrollTo(0, 0);
+});
+document.getElementById('rangeSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('.rng');
+  if (!b) return;
+  document.querySelectorAll('#rangeSeg .rng').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  rangeMonths = Number(b.dataset.r);
+  render();
 });
 
 // ===== Theme =====
 function toggleTheme() {
   const cur = document.documentElement.getAttribute('data-theme');
   const next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+  applyTheme(next);
   try { localStorage.setItem('salary-theme', next); } catch(e) {}
+}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
 }
 (function initTheme() {
   let saved;
   try { saved = localStorage.getItem('salary-theme'); } catch(e) {}
-  if (saved) {
-    document.documentElement.setAttribute('data-theme', saved);
-    const btn = document.getElementById('themeBtn');
-    if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
-  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    const btn = document.getElementById('themeBtn');
-    if (btn) btn.textContent = '☀️';
-  }
+  applyTheme(saved || 'dark');   // 默认深色
 })();
 
 // ===== Init =====
 (function init() {
-  if (checkAuth()) {
-    showApp();
-  } else {
-    showLogin();
-  }
+  if (checkAuth()) showApp(); else showLogin();
 })();
 </script>
 </body>
