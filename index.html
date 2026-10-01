@@ -143,7 +143,9 @@ button { font-family: inherit; }
 .hero-gap { text-align: right; background: var(--surface2); border-radius: 12px; padding: 10px 16px; }
 .hero-gap .k { font-size: 10.5px; color: var(--faint); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 .hero-gap .v { font-size: 20px; font-weight: 800; color: var(--orange); }
-.dual-svg { width: 100%; height: 150px; display: block; margin-top: 10px; }
+.dual-svg { display: block; }
+.spark-holder { min-height: 56px; }
+.dual-holder { min-height: 170px; margin-top: 10px; }
 .dual-legend { display: flex; align-items: center; gap: 20px; padding: 6px 2px 4px; font-size: 12px; color: var(--muted); font-weight: 600; }
 .dual-legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: middle; }
 .dual-legend .lg-net { background: var(--green); } .dual-legend .lg-gross { background: #b3b3b3; }
@@ -176,7 +178,7 @@ button { font-family: inherit; }
 .spark-current { font-size: 17px; font-weight: 800; letter-spacing: -.3px; white-space: nowrap; }
 .spark-current.up { color: var(--green); } .spark-current.down { color: var(--red); } .spark-current.flat { color: var(--muted); }
 .spark-delta { font-size: 11px; font-weight: 600; color: var(--faint); margin-bottom: 4px; }
-.sparkline { width: 100%; height: 56px; display: block; margin-top: 4px; }
+.sparkline { height: 56px; display: block; margin-top: 4px; }
 .spark-axis-labels { display: flex; justify-content: space-between; margin-top: 2px; font-size: 10px; color: var(--faint); font-weight: 600; }
 /* ---------- detail ---------- */
 .month-scroller { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; scrollbar-width: none; }
@@ -294,9 +296,8 @@ table.mx .col-m { min-width: 82px; }
         <button class="pill tab" data-tab="detail">明细</button>
       </div>
       <div class="seg" id="rangeSeg">
-        <button class="pill rng on" data-r="3">近3月</button>
         <button class="pill rng" data-r="6">近6月</button>
-        <button class="pill rng" data-r="0">全部</button>
+        <button class="pill rng on" data-r="0">全部</button>
       </div>
       <div class="tools">
         <button class="pill ghost" onclick="openPwdModal('change')" style="height:38px">改密码</button>
@@ -315,7 +316,7 @@ const AUTH_KEY = 'salary-session';  // 存的是服务端签发的会话票, 非
 let allData = [];
 let periods = [];
 let currentTab = 'dashboard';
-let rangeMonths = 3;         // 时间范围筛选: 3/6/0=全部
+let rangeMonths = 0;         // 时间范围筛选: 6=近6月 / 0=全部(默认)
 let dataLoaded = false;
 let collapsedGroups = {};    // 分组折叠状态
 let SID = 0;                 // svg gradient id 计数器
@@ -496,7 +497,8 @@ function getSeries(nameMatch, categoryMatch, count) {
   return recent.map(p => getItemValue(p, nameMatch, categoryMatch));
 }
 
-// ===== Sparkline SVG (平滑曲线 + 渐变面积) =====
+// ===== Sparkline SVG (平滑曲线 + 渐变面积; 按真实像素宽绘制, 杜绝拉伸) =====
+const SPARKREG = {};   // sid -> {kind, ...spec} 渲染时先占位, 插入DOM后测宽再绘制
 function smoothPath(pts) {
   if (pts.length < 2) return '';
   let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
@@ -509,10 +511,11 @@ function smoothPath(pts) {
   return d;
 }
 
-function buildSparkline(values, isUp, months) {
+function buildSparkline(values, isUp, months, w) {
   const count = values.length;
   if (count < 2) return '<div class="sparkline"></div>';
-  const w = 200, h = 56, padX = 10, padY = 7;
+  w = Math.max(120, Math.round(w || 200));
+  const h = 56, padX = 10, padY = 7;
   const usableW = w - padX * 2, usableH = h - padY * 2;
   const isNegative = values.some(v => v < 0);
   const pts = values.map((v, i) => {
@@ -540,7 +543,7 @@ function buildSparkline(values, isUp, months) {
     const valStr = p.v < 0 ? '-¥' + fmt(Math.abs(p.v)) : '¥' + fmt(p.v);
     return `<circle class="spark-hit" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="14" fill="transparent" style="cursor:pointer" data-month="${p.month}" data-value="${valStr}"/>`;
   }).join('');
-  return `<svg viewBox="0 0 ${w} ${h}" class="sparkline" preserveAspectRatio="none">
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="sparkline" style="width:${w}px">
     <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${solid}" stop-opacity="0.28"/>
       <stop offset="100%" stop-color="${solid}" stop-opacity="0"/>
@@ -565,10 +568,12 @@ function trendOf(values) {
 function buildSparkCard(title, values) {
   const recent = windowPeriods().slice(-values.length);
   const { current, diff, isUp, trendClass } = trendOf(values);
-  const displayValue = fmtShort(Math.abs(current)) + (current < 0 ? '' : '');
+  const displayValue = fmtShort(Math.abs(current));
   const arrow = isUp === true ? '↑' : isUp === false ? '↓' : '→';
   const dSign = diff >= 0 ? '+' : '-';
-  const dTxt = `区间变化 ${dSign}¥${fmtShort(Math.abs(diff)).replace('万','万')}`;
+  const dTxt = `区间变化 ${dSign}¥${fmtShort(Math.abs(diff))}`;
+  const sid = 'c' + (++SID);
+  SPARKREG[sid] = { kind: 'spark', values, isUp, months: recent };
   const axis = recent.map(p => `<span>${periodLabel(p)}</span>`).join('');
   return `<div class="spark-card">
     <div class="spark-header">
@@ -576,16 +581,17 @@ function buildSparkCard(title, values) {
       <span class="spark-current ${trendClass}">${current < 0 ? '-' : ''}${displayValue} ${arrow}</span>
     </div>
     <div class="spark-delta">${dTxt}</div>
-    ${buildSparkline(values, isUp, recent)}
+    <div class="spark-holder" data-sp="${sid}"></div>
     <div class="spark-axis-labels">${axis}</div>
   </div>`;
 }
 
-// ===== 双线叠加图 (税前 vs 到手) =====
-function buildDualLine(netSeries, grossSeries, months) {
+// ===== 双线叠加图 (税前 vs 到手; 按真实像素宽绘制) =====
+function buildDualLine(netSeries, grossSeries, months, w) {
   const count = months.length;
   if (count < 2) return '';
-  const w = 600, h = 150, padX = 14, padT = 12, padB = 22;
+  w = Math.max(280, Math.round(w || 600));
+  const h = 170, padX = 16, padT = 14, padB = 24;
   const usableW = w - padX * 2, usableH = h - padT - padB;
   const all = [...netSeries, ...grossSeries];
   const min = Math.min(...all), max = Math.max(...all), r = max - min || 1;
@@ -603,15 +609,28 @@ function buildDualLine(netSeries, grossSeries, months) {
       data-month="${m}" data-gross="¥${fmt(g)}" data-net="¥${fmt(n)}"/>`;
   }).join('');
   const axis = months.map((m, i) => `<text x="${px(i).toFixed(1)}" y="${h-6}" text-anchor="middle" font-size="10" fill="var(--faint)" font-weight="600">${periodLabel(m)}</text>`).join('');
-  return `<svg viewBox="0 0 ${w} ${h}" class="dual-svg" preserveAspectRatio="none">
-    <defs><linearGradient id="nagrad" x1="0" y1="0" x2="0" y2="1">
+  const gid = 'na' + (++SID);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="dual-svg">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#1ed760" stop-opacity="0.20"/><stop offset="100%" stop-color="#1ed760" stop-opacity="0"/>
     </linearGradient></defs>
-    <path d="${nArea}" fill="url(#nagrad)"/>
-    <path d="${gLine}" fill="none" stroke="#b3b3b3" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="none" opacity="0.9"/>
+    <path d="${nArea}" fill="url(#${gid})"/>
+    <path d="${gLine}" fill="none" stroke="#b3b3b3" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
     <path d="${nLine}" fill="none" stroke="#1ed760" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
     ${gDots}${nDots}${axis}${hits}
   </svg>`;
+}
+
+// 两遍绘制: 渲染时先放占位 holder, 插入DOM后测真实宽度再画 (杜绝 viewBox 拉伸)
+function paintSparks() {
+  document.querySelectorAll('[data-sp]').forEach(holder => {
+    const spec = SPARKREG[holder.dataset.sp];
+    if (!spec) return;
+    const w = holder.clientWidth || 200;
+    holder.innerHTML = spec.kind === 'dual'
+      ? buildDualLine(spec.net, spec.gross, spec.months, w)
+      : buildSparkline(spec.values, spec.isUp, spec.months, w);
+  });
 }
 
 // ===== Dashboard =====
@@ -641,6 +660,8 @@ function renderDashboard() {
   const netSeries = win.map(p => getNetPay(p));
   const grossSeries = win.map(p => getGrossTotal(p));
   const gapPct = gross > 0 ? ((gross - net) / gross) * 100 : 0;
+  const hid = 'd' + (++SID);
+  SPARKREG[hid] = { kind: 'dual', net: netSeries, gross: grossSeries, months: win };
   const heroCard = `<div class="hero-card net">
     <div class="hero-top">
       <div>
@@ -652,7 +673,7 @@ function renderDashboard() {
       </div>
       <div class="hero-gap"><div class="k">当月被扣比例</div><div class="v">${gapPct.toFixed(1)}%</div></div>
     </div>
-    ${buildDualLine(netSeries, grossSeries, win)}
+    <div class="dual-holder" data-sp="${hid}"></div>
     <div class="dual-legend"><span><i class="lg-net"></i>到手工资</span><span><i class="lg-gross"></i>税前工资</span><span class="lg-hint">点/悬停月份看两值</span></div>
   </div>`;
 
@@ -822,8 +843,16 @@ function render() {
   const app = document.getElementById('app');
   if (allData.length === 0) { app.innerHTML = '<div class="loading"><div class="spin"></div></div>'; return; }
   app.innerHTML = currentTab === 'dashboard' ? renderDashboard() : renderDetail();
-  if (currentTab === 'dashboard') attachSparkInteractions();
+  if (currentTab === 'dashboard') { paintSparks(); attachSparkInteractions(); }
 }
+
+// 窗口尺寸变化时按新宽度重绘 (holder 规格仍在 SPARKREG)
+let rzTimer = null;
+window.addEventListener('resize', () => {
+  if (currentTab !== 'dashboard') return;
+  clearTimeout(rzTimer);
+  rzTimer = setTimeout(() => { paintSparks(); attachSparkInteractions(); }, 150);
+});
 
 // ===== Tab & range =====
 document.getElementById('tabs').addEventListener('click', (e) => {
