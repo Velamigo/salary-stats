@@ -378,6 +378,7 @@ select {
     <h1>💵 我的工资</h1>
     <div class="header-right">
       <button class="logout-btn" onclick="doLogout()">退出</button>
+      <button class="logout-btn" onclick="doChangePass()">改密码</button>
       <div class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</div>
     </div>
   </header>
@@ -429,6 +430,27 @@ async function doLogin() {
 function doLogout() {
   try { localStorage.removeItem(AUTH_KEY); } catch(e) {}
   showLogin();
+}
+
+async function doChangePass() {
+  const np = prompt('输入新密码（至少6位）。留空或取消则不改。');
+  if (np === null) return;
+  const trimmed = np.trim();
+  if (trimmed.length < 6) { alert('太短，密码至少6位'); return; }
+  const confirm2 = prompt('请再输入一次新密码确认：');
+  if (confirm2 === null) return;
+  if (confirm2.trim() !== trimmed) { alert('两次输入不一致，未修改'); return; }
+  try {
+    const res = await fetch(`${API_BASE}/payslip-change-pass`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-payslip-session': getSession() || '' },
+      body: JSON.stringify({ new_password: trimmed })
+    });
+    const d = await res.json().catch(() => ({}));
+    if (res.status === 401) { alert('会话已过期，请退出重新登录后再改'); return; }
+    if (!res.ok || d.status !== 'OK') { alert('修改失败：' + (d.msg || res.status)); return; }
+    alert('密码已更新。本次仍保持登录，下次请用新密码进入。');
+  } catch (e) { alert('网络错误：' + e.message); }
 }
 
 function showLogin() {

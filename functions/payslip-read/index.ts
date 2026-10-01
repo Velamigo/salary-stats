@@ -23,8 +23,9 @@ async function validTicket(t: string | null): Promise<boolean> {
 }
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type,x-payslip-session" } });
-  if (!(await validTicket(req.headers.get("x-payslip-session")))) return J({ status: "DENIED", msg: "session required" }, 401);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type,x-payslip-session,x-payslip-token" } });
+  // 两种可信通道: 浏览器会话票 / cron 专用固定口令(改页面密码不影响它)
+  if (req.headers.get("x-payslip-token") !== SECRET && !(await validTicket(req.headers.get("x-payslip-session")))) return J({ status: "DENIED", msg: "session required" }, 401);
   const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
   const { data, error } = await supabase.from("payslips").select("period,category,item_name,item_value").order("period", { ascending: true });
