@@ -118,20 +118,24 @@ button { font-family: inherit; }
 .section-label h3 { font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
 .section-label .sub { font-size: 12px; color: var(--faint); font-weight: 500; }
 /* ---------- hero ---------- */
-.hero {
+.hero-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.hero-card {
   position: relative; overflow: hidden; border-radius: 16px;
+  background: var(--surface); box-shadow: var(--shadow-card); padding: 22px 24px 14px;
+}
+.hero-card.net {
   background:
     radial-gradient(700px 260px at 88% -40%, rgba(30,215,96,0.22), transparent 65%),
     var(--surface);
-  box-shadow: var(--shadow-card); padding: 26px; display: grid;
-  grid-template-columns: minmax(240px, 1fr) 1.2fr; gap: 22px; align-items: center;
 }
 .hero-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 8px; }
-.hero-num { font-size: clamp(34px, 6vw, 46px); font-weight: 800; letter-spacing: -1px; line-height: 1.05; }
+.hero-num { font-size: clamp(30px, 5vw, 40px); font-weight: 800; letter-spacing: -1px; line-height: 1.05; }
 .hero-num .cur { font-size: .55em; font-weight: 700; color: var(--muted); margin-right: 4px; }
 .delta { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 700; background: var(--surface2); color: var(--muted); }
 .delta.up { color: var(--green); } .delta.down { color: var(--red); }
-.hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--hairline); border-radius: 12px; overflow: hidden; }
+.hero-spark { width: 100%; height: 72px; display: block; margin-top: 12px; }
+.hero-card .sparkline { height: 72px; margin-top: 14px; }
+.hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--hairline); border-radius: 12px; overflow: hidden; margin-top: 14px; }
 .hs-cell { background: var(--surface2); padding: 14px 12px; text-align: center; }
 .hs-cell .k { font-size: 11px; color: var(--faint); font-weight: 600; margin-bottom: 5px; }
 .hs-cell .v { font-size: 16.5px; font-weight: 800; letter-spacing: -.2px; }
@@ -199,7 +203,7 @@ button { font-family: inherit; }
 @keyframes sp { to { transform: rotate(360deg); } }
 /* ---------- responsive ---------- */
 @media (max-width: 860px) {
-  .hero { grid-template-columns: 1fr; }
+  .hero-wrap { grid-template-columns: 1fr; }
   .detail-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
@@ -208,7 +212,7 @@ button { font-family: inherit; }
   .seg { width: 100%; justify-content: center; }
   .tools { margin-left: auto; }
   .page { padding: 16px 12px 70px; }
-  .hero { padding: 20px 16px; }
+  .hero-card { padding: 18px 16px 12px; }
   .hero-stats { grid-template-columns: 1fr 1fr; }
   .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
   .spark-current { font-size: 15px; }
@@ -547,11 +551,9 @@ function buildSparkCard(title, values) {
 
 // ===== Dashboard =====
 const GROUPS = [
-  { id: 'gross',  icon: '💰', name: '税前收入',   items: [['基本工资','基本工资','税前收入'],['月综合津贴','月综合津贴','税前收入'],['交通津贴','交通津贴','税前收入'],['节日津贴','节日津贴','税前收入'],['特别奖金','特别奖金','税前收入'],['总计税前','总计','税前收入']] },
-  { id: 'ins',    icon: '🛡️', name: '五险一金',   items: [['养老保险','养老','税前工资扣除'],['失业保险','失业','税前工资扣除'],['医疗保险','医疗','税前工资扣除'],['住房公积金','住房公积金','税前工资扣除'],['总计扣除','总计','税前工资扣除']] },
-  { id: 'tax',    icon: '📋', name: '个税',       items: [['工资税','工资税','个人所得税']] },
-  { id: 'net',    icon: '✅', name: '到手',       items: [['实发工资','税后实发','税后']] },
-  { id: 'param',  icon: '📐', name: '参数',       items: [['自动缺勤每日扣款','自动缺勤每日扣款金额','参数'],['基本工资/天','基本工资/天','参数'],['津贴/天','津贴/天','参数'],['加班费/每小时','加班费/每小时','参数'],['公积金基数','公积金基数','参数'],['社会保险基数','社会保险基数','参数']] },
+  { id: 'gross',  icon: '💰', name: '税前收入',   items: [['基本工资','基本工资','税前收入'],['节日津贴','节日津贴','税前收入'],['特别奖金','特别奖金','税前收入'],['总计税前','总计','税前收入']] },
+  { id: 'ded',    icon: '🧾', name: '扣除与税费', items: [['工资税','工资税','个人所得税'],['养老保险','养老','税前工资扣除'],['失业保险','失业','税前工资扣除'],['医疗保险','医疗','税前工资扣除'],['住房公积金','住房公积金','税前工资扣除'],['总计扣除','总计','税前工资扣除']] },
+  { id: 'param',  icon: '📐', name: '参数',       items: [['公积金基数','公积金基数','参数'],['社会保险基数','社会保险基数','参数'],['自动缺勤每日扣款','自动缺勤每日扣款金额','参数'],['基本工资/天','基本工资/天','参数'],['津贴/天','津贴/天','参数'],['加班费/每小时','加班费/每小时','参数'],['月综合津贴','月综合津贴','税前收入'],['交通津贴','交通津贴','税前收入']] },
 ];
 
 function renderDashboard() {
@@ -571,9 +573,24 @@ function renderDashboard() {
   const avgNet = win.length ? totalNet / win.length : 0;
   const winLabel = win.length === periods.length ? '全部' : win.length + '个月';
 
-  const dCls = Math.abs(netDiff) < 0.01 ? '' : netDiff > 0 ? 'up' : 'down';
-  const dArrow = Math.abs(netDiff) < 0.01 ? '→' : netDiff > 0 ? '▲' : '▼';
-  const dTxt = prev ? `${dArrow} ${netDiff >= 0 ? '+' : '-'}¥${fmt(Math.abs(netDiff))} vs ${periodLabel(prev)}` : '';
+  const grossDiff = gross - (prev ? getGrossTotal(prev) : 0);
+  function deltaChip(diff) {
+    if (!prev) return '';
+    const cls = Math.abs(diff) < 0.01 ? '' : diff > 0 ? 'up' : 'down';
+    const arrow = Math.abs(diff) < 0.01 ? '→' : diff > 0 ? '▲' : '▼';
+    return `<div class="delta ${cls}">${arrow} ${diff >= 0 ? '+' : '-'}¥${fmt(Math.abs(diff))} vs ${periodLabel(prev)}</div>`;
+  }
+  function heroCard(kind, label, value, diff, series) {
+    const { isUp } = trendOf(series);
+    return `<div class="hero-card ${kind}">
+      <div class="hero-label">${label} · ${periodLabel(latest)}</div>
+      <div class="hero-num"><span class="cur">¥</span>${fmt(value)}</div>
+      ${deltaChip(diff)}
+      ${buildSparkline(series, isUp, win)}
+    </div>`;
+  }
+  const netSeries = win.map(p => getNetPay(p));
+  const grossSeries = win.map(p => getGrossTotal(p));
 
   const groupsHtml = GROUPS.map(g => {
     const closed = collapsedGroups[g.id] ? 'closed' : '';
@@ -591,24 +608,20 @@ function renderDashboard() {
   }).join('');
 
   return `
-    <section class="hero">
-      <div>
-        <div class="hero-label">当月实发 · ${periodLabel(latest)}</div>
-        <div class="hero-num"><span class="cur">¥</span>${fmt(net)}</div>
-        <div class="delta ${dCls}">${dTxt}</div>
-      </div>
-      <div class="hero-stats">
-        <div class="hs-cell"><div class="k">税前收入</div><div class="v">${fmtInt(gross)}</div></div>
-        <div class="hs-cell"><div class="k">个税</div><div class="v neg">${fmtInt(tax)}</div></div>
-        <div class="hs-cell"><div class="k">五险一金</div><div class="v neg">-${fmtInt(ded)}</div></div>
-        <div class="hs-cell"><div class="k">到手率</div><div class="v" style="color:var(--green)">${netRatio.toFixed(1)}%</div></div>
-      </div>
-    </section>
+    <div class="hero-wrap">
+      ${heroCard('net', '当月实发（到手）', net, netDiff, netSeries)}
+      ${heroCard('gross', '税前收入', gross, grossDiff, grossSeries)}
+    </div>
+    <div class="hero-stats">
+      <div class="hs-cell"><div class="k">个税</div><div class="v neg">${fmtInt(tax)}</div></div>
+      <div class="hs-cell"><div class="k">五险一金</div><div class="v neg">-${fmtInt(ded)}</div></div>
+      <div class="hs-cell"><div class="k">税率</div><div class="v" style="color:var(--orange)">${taxRate.toFixed(1)}%</div></div>
+      <div class="hs-cell"><div class="k">到手率</div><div class="v" style="color:var(--green)">${netRatio.toFixed(1)}%</div></div>
+    </div>
     <div class="cum-strip">
       <span class="pill">${winLabel}累计税前 <b>¥${fmtInt(totalGross)}</b></span>
       <span class="pill">${winLabel}累计到手 <b>¥${fmtInt(totalNet)}</b></span>
       <span class="pill">月均到手 <b>¥${fmtInt(avgNet)}</b></span>
-      <span class="pill">税率 <b>${taxRate.toFixed(1)}%</b></span>
     </div>
     ${groupsHtml}
   `;
@@ -682,7 +695,7 @@ function showSparkTooltip(hitArea, cardEl) {
 function hideSparkTooltip() { if (sparkTooltipEl) sparkTooltipEl.classList.remove('visible'); }
 function attachSparkInteractions() {
   document.querySelectorAll('.spark-hit').forEach(ha => {
-    const card = ha.closest('.spark-card');
+    const card = ha.closest('.spark-card, .hero-card');
     if (!card) return;
     ha.addEventListener('mouseenter', () => { clearTimeout(sparkTooltipTimer); showSparkTooltip(ha, card); });
     ha.addEventListener('mouseleave', () => { sparkTooltipTimer = setTimeout(hideSparkTooltip, 200); });
