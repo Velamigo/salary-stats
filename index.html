@@ -118,23 +118,36 @@ button { font-family: inherit; }
 .section-label h3 { font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
 .section-label .sub { font-size: 12px; color: var(--faint); font-weight: 500; }
 /* ---------- hero ---------- */
-.hero-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.hero-wrap { display: grid; grid-template-columns: 1fr; gap: 14px; }
 .hero-card {
   position: relative; overflow: hidden; border-radius: 16px;
   background: var(--surface); box-shadow: var(--shadow-card); padding: 22px 24px 14px;
 }
 .hero-card.net {
   background:
-    radial-gradient(700px 260px at 88% -40%, rgba(30,215,96,0.22), transparent 65%),
+    radial-gradient(900px 300px at 85% -50%, rgba(30,215,96,0.16), transparent 65%),
     var(--surface);
 }
+.hero-top { display: flex; align-items: flex-start; gap: 16px; }
+.hero-top > div:first-child { flex: 1; }
 .hero-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 8px; }
-.hero-num { font-size: clamp(30px, 5vw, 40px); font-weight: 800; letter-spacing: -1px; line-height: 1.05; }
-.hero-num .cur { font-size: .55em; font-weight: 700; color: var(--muted); margin-right: 4px; }
-.delta { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 700; background: var(--surface2); color: var(--muted); }
-.delta.up { color: var(--green); } .delta.down { color: var(--red); }
-.hero-spark { width: 100%; height: 72px; display: block; margin-top: 12px; }
-.hero-card .sparkline { height: 72px; margin-top: 14px; }
+.hero-nums { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 26px; }
+.hn { font-size: 14px; color: var(--muted); font-weight: 600; display: inline-flex; align-items: baseline; gap: 7px; }
+.hn i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.hn-net i { background: var(--green); box-shadow: 0 0 8px rgba(30,215,96,.6); }
+.hn-gross i { background: #b3b3b3; }
+.hn b { font-size: clamp(24px, 4vw, 32px); font-weight: 800; letter-spacing: -.8px; color: var(--text); }
+.hn-net b { color: var(--green); }
+.hn em { font-style: normal; font-size: 12.5px; font-weight: 700; margin-left: 4px; }
+.hn em.up { color: var(--green); } .hn em.down { color: var(--red); }
+.hero-gap { text-align: right; background: var(--surface2); border-radius: 12px; padding: 10px 16px; }
+.hero-gap .k { font-size: 10.5px; color: var(--faint); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.hero-gap .v { font-size: 20px; font-weight: 800; color: var(--orange); }
+.dual-svg { width: 100%; height: 150px; display: block; margin-top: 10px; }
+.dual-legend { display: flex; align-items: center; gap: 20px; padding: 6px 2px 4px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.dual-legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; margin-right: 6px; vertical-align: middle; }
+.dual-legend .lg-net { background: var(--green); } .dual-legend .lg-gross { background: #b3b3b3; }
+.dual-legend .lg-hint { margin-left: auto; color: var(--faint); font-weight: 400; font-size: 11px; }
 .hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--hairline); border-radius: 12px; overflow: hidden; margin-top: 14px; }
 .hs-cell { background: var(--surface2); padding: 14px 12px; text-align: center; }
 .hs-cell .k { font-size: 11px; color: var(--faint); font-weight: 600; margin-bottom: 5px; }
@@ -568,6 +581,39 @@ function buildSparkCard(title, values) {
   </div>`;
 }
 
+// ===== 双线叠加图 (税前 vs 到手) =====
+function buildDualLine(netSeries, grossSeries, months) {
+  const count = months.length;
+  if (count < 2) return '';
+  const w = 600, h = 150, padX = 14, padT = 12, padB = 22;
+  const usableW = w - padX * 2, usableH = h - padT - padB;
+  const all = [...netSeries, ...grossSeries];
+  const min = Math.min(...all), max = Math.max(...all), r = max - min || 1;
+  const px = i => padX + (usableW * i) / (count - 1);
+  const py = v => padT + usableH - ((v - min) / r) * usableH;
+  const gp = grossSeries.map((v, i) => ({ x: px(i), y: py(v) }));
+  const np = netSeries.map((v, i) => ({ x: px(i), y: py(v) }));
+  const gLine = smoothPath(gp), nLine = smoothPath(np);
+  const nArea = `${nLine} L${np[np.length-1].x.toFixed(1)},${(h-padB).toFixed(1)} L${np[0].x.toFixed(1)},${(h-padB).toFixed(1)} Z`;
+  const gDots = gp.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===count-1?4:2.5}" fill="#b3b3b3" ${i===count-1?'stroke="var(--surface)" stroke-width="2"':''}/>`).join('');
+  const nDots = np.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===count-1?4:2.5}" fill="#1ed760" ${i===count-1?'stroke="var(--surface)" stroke-width="2"':''}/>`).join('');
+  const hits = months.map((m, i) => {
+    const g = grossSeries[i], n = netSeries[i];
+    return `<rect class="dual-hit" x="${(px(i)-usableW/(count-1)/2).toFixed(1)}" y="0" width="${(usableW/(count-1)).toFixed(1)}" height="${h}" fill="transparent" style="cursor:pointer"
+      data-month="${m}" data-gross="¥${fmt(g)}" data-net="¥${fmt(n)}"/>`;
+  }).join('');
+  const axis = months.map((m, i) => `<text x="${px(i).toFixed(1)}" y="${h-6}" text-anchor="middle" font-size="10" fill="var(--faint)" font-weight="600">${periodLabel(m)}</text>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" class="dual-svg" preserveAspectRatio="none">
+    <defs><linearGradient id="nagrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1ed760" stop-opacity="0.20"/><stop offset="100%" stop-color="#1ed760" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${nArea}" fill="url(#nagrad)"/>
+    <path d="${gLine}" fill="none" stroke="#b3b3b3" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="none" opacity="0.9"/>
+    <path d="${nLine}" fill="none" stroke="#1ed760" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+    ${gDots}${nDots}${axis}${hits}
+  </svg>`;
+}
+
 // ===== Dashboard =====
 const GROUPS = [
   { id: 'gross',  icon: '💰', name: '税前收入',   items: [['基本工资','基本工资','税前收入'],['节日津贴','节日津贴','税前收入'],['特别奖金','特别奖金','税前收入'],['总计税前','总计','税前收入']] },
@@ -592,24 +638,23 @@ function renderDashboard() {
   const avgNet = win.length ? totalNet / win.length : 0;
   const winLabel = win.length === periods.length ? '全部' : win.length + '个月';
 
-  const grossDiff = gross - (prev ? getGrossTotal(prev) : 0);
-  function deltaChip(diff) {
-    if (!prev) return '';
-    const cls = Math.abs(diff) < 0.01 ? '' : diff > 0 ? 'up' : 'down';
-    const arrow = Math.abs(diff) < 0.01 ? '→' : diff > 0 ? '▲' : '▼';
-    return `<div class="delta ${cls}">${arrow} ${diff >= 0 ? '+' : '-'}¥${fmt(Math.abs(diff))} vs ${periodLabel(prev)}</div>`;
-  }
-  function heroCard(kind, label, value, diff, series) {
-    const { isUp } = trendOf(series);
-    return `<div class="hero-card ${kind}">
-      <div class="hero-label">${label} · ${periodLabel(latest)}</div>
-      <div class="hero-num"><span class="cur">¥</span>${fmt(value)}</div>
-      ${deltaChip(diff)}
-      ${buildSparkline(series, isUp, win)}
-    </div>`;
-  }
   const netSeries = win.map(p => getNetPay(p));
   const grossSeries = win.map(p => getGrossTotal(p));
+  const gapPct = gross > 0 ? ((gross - net) / gross) * 100 : 0;
+  const heroCard = `<div class="hero-card net">
+    <div class="hero-top">
+      <div>
+        <div class="hero-label">当月（${periodLabel(latest)}）</div>
+        <div class="hero-nums">
+          <span class="hn hn-net"><i></i>到手 <b>¥${fmt(net)}</b> ${netDiff !== 0 ? `<em class="${netDiff > 0 ? 'up' : 'down'}">${netDiff > 0 ? '▲' : '▼'}${fmt(Math.abs(netDiff))}</em>` : ''}</span>
+          <span class="hn hn-gross"><i></i>税前 <b>¥${fmt(gross)}</b></span>
+        </div>
+      </div>
+      <div class="hero-gap"><div class="k">当月被扣比例</div><div class="v">${gapPct.toFixed(1)}%</div></div>
+    </div>
+    ${buildDualLine(netSeries, grossSeries, win)}
+    <div class="dual-legend"><span><i class="lg-net"></i>到手工资</span><span><i class="lg-gross"></i>税前工资</span><span class="lg-hint">点/悬停月份看两值</span></div>
+  </div>`;
 
   const groupsHtml = GROUPS.map(g => {
     const closed = collapsedGroups[g.id] ? 'closed' : '';
@@ -628,8 +673,7 @@ function renderDashboard() {
 
   return `
     <div class="hero-wrap">
-      ${heroCard('net', '当月实发（到手）', net, netDiff, netSeries)}
-      ${heroCard('gross', '税前收入', gross, grossDiff, grossSeries)}
+      ${heroCard}
     </div>
     <div class="hero-stats">
       <div class="hs-cell"><div class="k">个税</div><div class="v neg">${fmtInt(tax)}</div></div>
@@ -736,7 +780,23 @@ function showSparkTooltip(hitArea, cardEl) {
   });
 }
 function hideSparkTooltip() { if (sparkTooltipEl) sparkTooltipEl.classList.remove('visible'); }
+function showDualTooltip(hitEl) {
+  const tt = ensureSparkTooltip();
+  tt.innerHTML = `<div class="st-month">${periodLabel(hitEl.dataset.month)}</div>
+    <div class="st-value" style="color:var(--green)">到手 ${hitEl.dataset.net}</div>
+    <div class="st-value" style="color:var(--muted);font-size:13px">税前 ${hitEl.dataset.gross}</div>`;
+  const r = hitEl.getBoundingClientRect();
+  tt.style.left = (r.left + r.width / 2) + 'px';
+  tt.style.top = r.top + window.scrollY - 6 + 'px';
+  tt.classList.add('visible');
+}
 function attachSparkInteractions() {
+  document.querySelectorAll('.dual-hit').forEach(ha => {
+    ha.addEventListener('mouseenter', () => { clearTimeout(sparkTooltipTimer); showDualTooltip(ha); });
+    ha.addEventListener('mouseleave', () => { sparkTooltipTimer = setTimeout(hideSparkTooltip, 200); });
+    ha.addEventListener('click', (e) => { e.stopPropagation(); showDualTooltip(ha); });
+    ha.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); showDualTooltip(ha); }, { passive: false });
+  });
   document.querySelectorAll('.spark-hit').forEach(ha => {
     const card = ha.closest('.spark-card, .hero-card');
     if (!card) return;
