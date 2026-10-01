@@ -183,6 +183,25 @@ button { font-family: inherit; }
 .detail-table tr.total-row td { font-weight: 800; color: var(--text); background: var(--surface2); }
 .detail-table tr.total-row td:first-child { border-radius: 8px 0 0 8px; }
 .detail-table tr.total-row td:last-child { border-radius: 0 8px 8px 0; }
+/* ---------- detail matrix ---------- */
+.mx-wrap { overflow-x: auto; border-radius: 14px; box-shadow: var(--shadow-card); background: var(--surface); -webkit-overflow-scrolling: touch; }
+table.mx { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; }
+table.mx th, table.mx td { padding: 9px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--hairline); }
+table.mx thead th { position: sticky; top: 0; z-index: 3; background: var(--elev); color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .3px; border-bottom: 1px solid var(--hairline); }
+table.mx .col-item { text-align: left; }
+table.mx tbody .item { text-align: left; color: var(--muted); font-weight: 500; position: sticky; left: 0; z-index: 2; background: var(--surface); }
+table.mx tbody tr:hover .item { background: var(--surface2); color: var(--text); }
+table.mx tbody tr:hover td { background: var(--surface2); }
+table.mx td.num { font-weight: 600; }
+table.mx td.num.neg { color: var(--red); }
+table.mx td.num.na { color: var(--faint); }
+table.mx td.num.zero { color: var(--faint); }
+table.mx .sec-row td { text-align: left; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--green); background: var(--surface2); position: static; }
+table.mx .total-row td { background: rgba(30,215,96,0.06); font-weight: 800; color: var(--text); }
+table.mx .total-row .item { background: rgba(30,215,96,0.06); color: var(--text); font-weight: 800; }
+table.mx .total-row .num.tot { color: var(--green); }
+table.mx .total-row .num.neg { color: var(--red); }
+table.mx .col-m { min-width: 82px; }
 /* ---------- modal ---------- */
 #pwdModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.62); backdrop-filter: blur(6px); z-index: 99; align-items: center; justify-content: center; padding: 20px; }
 #pwdModal .login-box { padding: 30px 26px 24px; }
@@ -627,43 +646,67 @@ function renderDashboard() {
   `;
 }
 
-// ===== Detail =====
-let selectedMonth = null;
+// ===== Detail (Excel 式矩阵: 项目=固定行, 月=列) =====
+// 行序写死, 每月完全一致, 便于跨列直观对照
+const DETAIL_ROWS = [
+  { sec: '税前收入' },
+  { label: '基本工资',        cat: '税前收入', name: '基本工资' },
+  { label: '月综合津贴',      cat: '税前收入', name: '月综合津贴' },
+  { label: '交通津贴',        cat: '税前收入', name: '交通津贴' },
+  { label: '节日津贴',        cat: '税前收入', name: '节日津贴' },
+  { label: '特别奖金',        cat: '税前收入', name: '特别奖金' },
+  { label: '总计 税前收入',   cat: '税前收入', name: '总计 税前收入', total: true },
+  { sec: '扣除与税费' },   // 2.税前工资扣除 + 3.个人所得税扣减 合并
+  { label: '养老保险',        cat: '税前工资扣除', name: '养老保险员工实缴' },
+  { label: '失业保险',        cat: '税前工资扣除', name: '失业保险员工实缴' },
+  { label: '医疗保险',        cat: '税前工资扣除', name: '医疗保险员工实缴' },
+  { label: '住房公积金',      cat: '税前工资扣除', name: '住房公积金员工实缴' },
+  { label: '总计 税前扣除',   cat: '税前工资扣除', name: '总计 税前扣除', total: true },
+  { label: '赡养老人扣减',    cat: '个人所得税', name: '赡养老人扣减金额' },
+  { label: '月工资税基',      cat: '个人所得税', name: '月工资税基' },
+  { label: '工资税',          cat: '个人所得税', name: '工资税' },
+  { sec: '税后实发' },      // 4 + 5 合并
+  { label: '税后实发合计',    cat: '税后', name: '税后实发合计', total: true },
+  { sec: '参数' },
+  { label: '公积金基数',      cat: '参数', name: '公积金基数' },
+  { label: '社会保险基数',    cat: '参数', name: '社会保险基数' },
+  { label: '基本工资/天',     cat: '参数', name: '基本工资/天' },
+  { label: '津贴/天',         cat: '参数', name: '津贴/天' },
+  { label: '加班费/每小时',   cat: '参数', name: '加班费/每小时' },
+  { label: '病假扣款/天(10-180)',  cat: '参数', name: '病假扣款/每日 (10-180天)' },
+  { label: '病假扣款/天(>180)',    cat: '参数', name: '病假扣款/每日 (180 天以上)' },
+  { label: '自动缺勤扣款/天', cat: '参数', name: '自动缺勤每日扣款金额' },
+];
 
-function renderDetail() {
-  const win0 = windowPeriods();
-  if (!selectedMonth || !win0.includes(selectedMonth)) selectedMonth = win0[win0.length - 1];
-  const win = win0;
-  const monthPills = win.map(p =>
-    `<button class="pill ${p === selectedMonth ? 'on' : ''}" style="flex-shrink:0" onclick="selectMonth('${p}')">${periodLabel(p)}</button>`).join('');
-
-  const monthData = allData.filter(d => d.period === selectedMonth);
-  const categoryOrder = ['1.税前收入','2.税前工资扣除','3.个人所得税扣减','4.税后应发和扣除','5.税后应发','6.参数'];
-
-  const cards = categoryOrder.map(cat => {
-    const items = monthData.filter(d => d.category.replace(/\s+/g,'') === cat.replace(/\s+/g,''));
-    if (items.length === 0) {
-      return `<div class="detail-card"><div class="detail-card-title"><span class="dot"></span>${cat}</div><div class="detail-empty">本月无此项</div></div>`;
-    }
-    const rows = items.map(item => {
-      const v = item.item_value;
-      const isTotal = item.item_name.includes('总计') || item.item_name.includes('合计');
-      return `<tr class="${isTotal ? 'total-row' : ''}"><td class="name">${item.item_name}</td><td class="val ${v < 0 ? 'neg' : ''}">${fmt(v)}</td></tr>`;
-    }).join('');
-    return `<div class="detail-card">
-      <div class="detail-card-title"><span class="dot"></span>${cat}<span class="chip" style="margin-left:auto">${items.length}</span></div>
-      <table class="detail-table"><thead><tr><th>项目</th><th style="text-align:right">金额（元）</th></tr></thead><tbody>${rows}</tbody></table>
-    </div>`;
-  }).join('');
-
-  return `
-    <div class="month-scroller">${monthPills}</div>
-    <div class="detail-grid">${cards}</div>
-  `;
+// 精确按 (类别含cat, 项目=name) 取值, 找不到返回 null(矩阵里显空)
+function cellVal(period, cat, name) {
+  const clean = s => String(s || '').replace(/\s+/g, '');
+  const hit = allData.find(d => d.period === period && clean(d.category).includes(clean(cat)) && clean(d.item_name) === clean(name));
+  return hit ? hit.item_value : null;
 }
 
-function selectMonth(m) { selectedMonth = m; render(); }
-function toggleGroup(id) { collapsedGroups[id] = !collapsedGroups[id]; render(); }
+function renderDetail() {
+  const win = windowPeriods();
+  const head = win.map(p => `<th class="col-m">${periodLabel(p)}</th>`).join('');
+  let body = '';
+  for (const r of DETAIL_ROWS) {
+    if (r.sec) { body += `<tr class="sec-row"><td class="item" colspan="${win.length + 1}">${r.sec}</td></tr>`; continue; }
+    const tds = win.map(p => {
+      const v = cellVal(p, r.cat, r.name);
+      if (v === null || v === 0) return `<td class="num ${v === null ? 'na' : 'zero'}">${v === null ? '—' : '0'}</td>`;
+      return `<td class="num ${v < 0 ? 'neg' : ''} ${r.total ? 'tot' : ''}">${fmtInt(v)}</td>`;
+    }).join('');
+    body += `<tr class="${r.total ? 'total-row' : ''}"><td class="item">${r.label}</td>${tds}</tr>`;
+  }
+  return `
+    <div class="mx-wrap">
+      <table class="mx">
+        <thead><tr><th class="col-item">项目（元）</th>${head}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  `;
+}
 
 // ===== Sparkline tooltip =====
 let sparkTooltipEl = null, sparkTooltipTimer = null;
@@ -713,6 +756,8 @@ function attachSparkInteractions() {
 }
 
 // ===== Main render =====
+function toggleGroup(id) { collapsedGroups[id] = !collapsedGroups[id]; render(); }
+
 function render() {
   const app = document.getElementById('app');
   if (allData.length === 0) { app.innerHTML = '<div class="loading"><div class="spin"></div></div>'; return; }
