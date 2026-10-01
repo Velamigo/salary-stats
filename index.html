@@ -393,10 +393,8 @@ select {
 </div>
 
 <script>
-const SUPABASE_URL = 'https://bqhnrmcrcvsmrxyxdymx.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_o3pPNc1c-kEe_RyvC79OEg_6lb0wGmu';
-const PASSWORD = 'salary2026';
-const AUTH_KEY = 'salary-auth';
+const API_BASE = 'https://bqhnrmcrcvsmrxyxdymx.supabase.co/functions/v1';
+const AUTH_KEY = 'salary-session';  // 存的是服务端签发的会话票, 非明文标记
 
 let allData = [];
 let periods = [];
@@ -404,24 +402,32 @@ let currentTab = 'dashboard';
 let dataLoaded = false;
 
 // ===== Auth =====
-function checkAuth() {
-  try { return sessionStorage.getItem(AUTH_KEY) === '1'; } catch(e) { return false; }
+function getSession() {
+  try { return localStorage.getItem(AUTH_KEY); } catch(e) { return null; }
 }
+function checkAuth() { return !!getSession(); }
 
-function doLogin() {
+async function doLogin() {
   const val = document.getElementById('pwdInput').value;
-  if (val === PASSWORD) {
-    try { sessionStorage.setItem(AUTH_KEY, '1'); } catch(e) {}
+  const err = document.getElementById('loginError');
+  err.textContent = '登录中…';
+  try {
+    const res = await fetch(`${API_BASE}/payslip-login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: val })
+    });
+    if (res.status === 401) { err.textContent = '密码错误，请重试'; document.getElementById('pwdInput').value = ''; document.getElementById('pwdInput').focus(); return; }
+    if (!res.ok) { err.textContent = '登录服务异常(' + res.status + ')'; return; }
+    const d = await res.json();
+    try { localStorage.setItem(AUTH_KEY, d.token); } catch(e) {}
+    err.textContent = '';
+    dataLoaded = false;  // 换票后重拉
     showApp();
-  } else {
-    document.getElementById('loginError').textContent = '密码错误，请重试';
-    document.getElementById('pwdInput').value = '';
-    document.getElementById('pwdInput').focus();
-  }
+  } catch (e) { err.textContent = '网络错误: ' + e.message; }
 }
 
 function doLogout() {
-  try { sessionStorage.removeItem(AUTH_KEY); } catch(e) {}
+  try { localStorage.removeItem(AUTH_KEY); } catch(e) {}
   showLogin();
 }
 
@@ -443,14 +449,16 @@ function showApp() {
 
 // ===== Data =====
 async function fetchData() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/payslips?select=period,category,item_name,item_value&order=period.asc`, {
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`
-    }
+  const res = await fetch(`${API_BASE}/payslip-read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-payslip-session': getSession() || '' },
+    body: '{}'
   });
-  if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
-  return res.json();
+  if (res.status === 401) { doLogout(); throw new Error('会话已过期，请重新登录'); }
+  if (!res.ok) throw new Error(`服务错误: ${res.status}`);
+  const d = await res.json();
+  if (d.status !== 'OK') throw new Error(d.msg || '读取失败');
+  return d.rows;
 }
 
 async function loadData() {
