@@ -1,0 +1,4 @@
+migrate/
+*.dump.json
+.tmp/
+payslip_fetch.py
